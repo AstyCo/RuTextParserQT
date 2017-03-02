@@ -4,6 +4,7 @@
 #include "syntagrus_parser_global.h"
 #include "cnfgrammar.h"
 
+#include <QMap>
 #include <QString>
 #include <QDomDocument>
 
@@ -18,6 +19,9 @@ public:
     void parseAll();
     void parseXml(const QString &path);
     void parseSequence(const QDomElement &sequenceElement);
+    static void insertRule(QMap<int, QStringList> *rules, int dom, QString link, QString feature);
+    static void addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature);
+    QString generateUniqueName() const;
 };
 
 #endif // SYNTAGRUSPARSER_H
