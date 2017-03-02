@@ -1,0 +1,1 @@
+Independent Structure Editor version that does not contain the linguistic processor has limited functionality.

@@ -1,5 +1,7 @@
 TEMPLATE = subdirs
 
+CONFIG +=  ordered
+
 SUBDIRS += \
-    SynTagRusParser \
-    CNFGrammar
+    cnfgrammar \
+    syntagrus_parser

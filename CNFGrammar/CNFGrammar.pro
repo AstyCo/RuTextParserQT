@@ -1,12 +1,12 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2017-03-02T23:24:39
+# Project created by QtCreator 2017-03-02T23:38:58
 #
 #-------------------------------------------------
 
 QT       -= gui
 
-TARGET = CNFGrammar
+TARGET = cnfgrammar
 TEMPLATE = lib
 
 DEFINES += CNFGRAMMAR_LIBRARY
@@ -22,10 +22,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-SOURCES += cnfgrammar.cpp
+include(../link_projects_include.pri)
+
+SOURCES += cnfgrammar.cpp \
+    rulecnfgrammar.cpp
 
 HEADERS += cnfgrammar.h\
-        cnfgrammar_global.h
+        cnfgrammar_global.h \
+    rulecnfgrammar.h
 
 unix {
     target.path = /usr/lib
