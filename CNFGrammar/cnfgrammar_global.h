@@ -1,0 +1,12 @@
+#ifndef CNFGRAMMAR_GLOBAL_H
+#define CNFGRAMMAR_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(CNFGRAMMAR_LIBRARY)
+#  define CNFGRAMMARSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define CNFGRAMMARSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // CNFGRAMMAR_GLOBAL_H
