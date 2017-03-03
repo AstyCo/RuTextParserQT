@@ -8,19 +8,42 @@
 #include <QString>
 #include <QDomDocument>
 
+/*!
+ * \brief The SynTagRusParser class parsing SynTagRus corpora into CNFGrammar
+ *
+ */
 class SYNTAGRUS_PARSERSHARED_EXPORT SynTagRusParser
 {
-    static QString _synTagRusDirectory = "syntagrus04.07.2012";
     CNFGrammar *_grammar;
+    QString _synTagRusDirectory;
+
 public:
     SynTagRusParser();
     ~SynTagRusParser();
 
-    void parseAll();
+    /*!
+     * \brief Parsing SynTagRus
+     * Function parsing all .tgt files in the setted by setDirectory(<path>) function
+     */
+    void parse();
+
+    /*!
+     * \brief Call it after parse() to get resulting Grammar
+     * \return Pointer to <Grammar in Chomsky Normal Form>
+     */
+    CNFGrammar *getGrammar();
+
+    /*!
+     * \brief Sets the directory with SynTagRusFiles
+     * \param path Directory Path
+     */
+    void setDirectory(const QString &path);
+
+private:
     void parseXml(const QString &path);
     void parseSequence(const QDomElement &sequenceElement);
     static void insertRule(QMap<int, QStringList> *rules, int dom, QString link, QString feature);
-    static void addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature);
+    void addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature);
     QString generateUniqueName() const;
 };
 
