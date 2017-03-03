@@ -6,6 +6,8 @@
 #include <QPair>
 #include <QDirIterator>
 
+#include <QDebug>
+
 SynTagRusParser::SynTagRusParser()
     :_grammar(new CNFGrammar()), _synTagRusDirectory("../../RuTextParserQT/syntagrus04.07.2012")
 {
@@ -29,7 +31,9 @@ void SynTagRusParser::parse(const QString &path)
 //            return;
 
         parseXml(it.next());
+        qDebug() << it.filePath() << "PARSED";
     }
+    qDebug() << "PARSING FINISHED";
 }
 
 CNFGrammar *SynTagRusParser::getGrammar()
@@ -88,12 +92,16 @@ void SynTagRusParser::parseSequence(const QDomElement &sequenceElement, const QS
 
         if (dom == 0){
             qWarning(QString("DOM attribute conversion error %1").arg(domAttr.value()).toLocal8Bit().data());
+
+            wordElement = wordElement.nextSiblingElement("W");
             continue;
         }
 
         int id = wordElement.attributeNode("ID").value().toInt();
         if (id == 0){
             qWarning(QString("ID attribute conversion error %1").arg(wordElement.text()).toLocal8Bit().data());
+
+            wordElement = wordElement.nextSiblingElement("W");
             continue;
         }
 
@@ -101,6 +109,8 @@ void SynTagRusParser::parseSequence(const QDomElement &sequenceElement, const QS
         if (feature.isEmpty()){
             if (wordElement.attribute("NODETYPE") != "FANTOM")
                 qWarning(QString("FEAT attribute error %1").arg(tmp).toLocal8Bit().data());
+
+            wordElement = wordElement.nextSiblingElement("W");
             continue;
         }
 
@@ -163,13 +173,7 @@ void SynTagRusParser::addCNFRules(QMap<int, QStringList>::Iterator &i, const QMa
         return;
     }
     else {
-        QString lastGeneratedName = generateUniqueName();
-
-        _grammar->addRule(RuleCNFGrammar(idToFeature[i.key()], idToFeature[i.key()], lastGeneratedName));
-
-        for (int j = 0; j < i.value().size(); ++j) {
-            _grammar->addRule(RuleCNFGrammar(lastGeneratedName, lastGeneratedName, i.value()[j]));
-        }
+        generationMethod1(i, idToFeature);
     }
 }
 
@@ -178,4 +182,23 @@ QString SynTagRusParser::generateUniqueName() const
     static long long n = 1;
 
     return "S" + QString::number(n++);
+}
+
+void SynTagRusParser::generationMethod1(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature)
+{
+    QString lastGeneratedName = generateUniqueName();
+
+    // creating first rule
+    _grammar->addRule(RuleCNFGrammar(idToFeature[i.key()], idToFeature[i.key()], lastGeneratedName));
+
+    // creating most rules
+    for (int j = 0; j < i.value().size() - 1; ++j) {
+        QString newGeneratedName = generateUniqueName();
+        _grammar->addRule(RuleCNFGrammar(lastGeneratedName, i.value()[j], newGeneratedName));
+        lastGeneratedName = newGeneratedName;
+    }
+
+    // creating last rule
+
+
 }

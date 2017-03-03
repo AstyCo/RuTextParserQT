@@ -1,0 +1,12 @@
+#ifndef CYK_ANALYZER_GLOBAL_H
+#define CYK_ANALYZER_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(CYK_ANALYZER_LIBRARY)
+#  define CYK_ANALYZERSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define CYK_ANALYZERSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // CYK_ANALYZER_GLOBAL_H

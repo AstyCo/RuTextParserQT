@@ -1,0 +1,12 @@
+#ifndef CNF_GRAMMAR_GLOBAL_H
+#define CNF_GRAMMAR_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(CNF_GRAMMAR_LIBRARY)
+#  define CNF_GRAMMARSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define CNF_GRAMMARSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // CNF_GRAMMAR_GLOBAL_H

@@ -1,11 +1,11 @@
 #ifndef RULECNFGRAMMAR_H
 #define RULECNFGRAMMAR_H
 
-#include "cnfgrammar_global.h"
+#include "cnf_grammar_global.h"
 
 #include <QString>
 
-struct CNFGRAMMARSHARED_EXPORT RuleCNFGrammar
+struct CNF_GRAMMARSHARED_EXPORT RuleCNFGrammar
 {
 public:
     RuleCNFGrammar();

@@ -6,10 +6,10 @@
 
 QT       -= gui
 
-TARGET = cnfgrammar
+TARGET = cnf_grammar
 TEMPLATE = lib
 
-DEFINES += CNFGRAMMAR_LIBRARY
+DEFINES += CNF_GRAMMAR_LIBRARY
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -28,8 +28,8 @@ SOURCES += cnfgrammar.cpp \
     rulecnfgrammar.cpp
 
 HEADERS += cnfgrammar.h\
-        cnfgrammar_global.h \
-    rulecnfgrammar.h
+    rulecnfgrammar.h \
+    cnf_grammar_global.h
 
 unix {
     target.path = /usr/lib

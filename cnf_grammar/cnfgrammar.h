@@ -1,7 +1,7 @@
 #ifndef CNFGRAMMAR_H
 #define CNFGRAMMAR_H
 
-#include "cnfgrammar_global.h"
+#include "cnf_grammar_global.h"
 
 #include "rulecnfgrammar.h"
 
@@ -9,7 +9,7 @@
 #include <QVector>
 #include <QMap>
 
-class CNFGRAMMARSHARED_EXPORT CNFGrammar
+class CNF_GRAMMARSHARED_EXPORT CNFGrammar
 {
     QString _dumpFilename;
 public:

@@ -45,6 +45,8 @@ private:
     static void insertRule(QMap<int, QStringList> *rules, int dom, QString link, QString feature);
     void addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature);
     QString generateUniqueName() const;
+
+    void generationMethod1(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature);
 };
 
 #endif // SYNTAGRUSPARSER_H

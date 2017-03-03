@@ -1,10 +1,10 @@
 #ifndef CYKANALYZER_H
 #define CYKANALYZER_H
 
-#include "cykanalyzer_global.h"
+#include "cyk_analyzer_global.h"
 #include "cnfgrammar.h"
 
-class CYKANALYZERSHARED_EXPORT CYKAnalyzer
+class CYK_ANALYZERSHARED_EXPORT CYKAnalyzer
 {
 public:
     CYKAnalyzer();

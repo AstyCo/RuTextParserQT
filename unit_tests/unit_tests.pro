@@ -26,9 +26,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 include(../link_projects_include.pri)
-include(../cnfgrammar_include.pri)
+include(../cnf_grammar_include.pri)
 include(../syntagrus_parser_include.pri)
-include(../cykanalyzer_include.pri)
+include(../cyk_analyzer_include.pri)
 
 
 
