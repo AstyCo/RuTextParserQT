@@ -43,6 +43,10 @@ public:
      */
     void loadFromDump();
 
+    bool isEmpty() const;
+    int size() const;
+    const QVector<RuleCNFGrammar> &rules() const;
+
 private:
     void clearCache();
     void fillCache(RuleCNFGrammar *rule);
@@ -61,6 +65,14 @@ private:
     friend QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr);
 };
 
+/// INLINE FUNCTIONS
+inline bool CNFGrammar::isEmpty() const { return _rules.isEmpty();}
+
+inline int CNFGrammar::size() const { return _rules.size();}
+
+inline const QVector<RuleCNFGrammar> &CNFGrammar::rules() const { return _rules;}
+
+/// SERIALIZATION / DESERIALIZATION
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr);
 QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr);
 

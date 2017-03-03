@@ -4,9 +4,10 @@
 #include <QDir>
 #include <QDomDocument>
 #include <QPair>
+#include <QDirIterator>
 
 SynTagRusParser::SynTagRusParser()
-    :_grammar(new CNFGrammar()), _synTagRusDirectory("syntagrus04.07.2012")
+    :_grammar(new CNFGrammar()), _synTagRusDirectory("../../RuTextParserQT/syntagrus04.07.2012")
 {
 }
 
@@ -15,13 +16,20 @@ SynTagRusParser::~SynTagRusParser()
     delete _grammar;
 }
 
-void SynTagRusParser::parse()
+void SynTagRusParser::parse(const QString &path)
 {
-    QDir dir(_synTagRusDirectory);
-    QStringList files = dir.entryList(QStringList("*.tgt"));
+    QString synTagRusPath =  ( path.isEmpty()
+                                 ? _synTagRusDirectory
+                                 : path );
 
-    foreach(const QString &fileName, files)
-        parseXml(fileName);
+    QDirIterator it(synTagRusPath, QStringList() << "*.tgt", QDir::Files, QDirIterator::Subdirectories);
+//    int kk = 0;
+    while (it.hasNext()) {
+//        if (kk++ > 5)
+//            return;
+
+        parseXml(it.next());
+    }
 }
 
 CNFGrammar *SynTagRusParser::getGrammar()
@@ -32,8 +40,12 @@ CNFGrammar *SynTagRusParser::getGrammar()
 void SynTagRusParser::parseXml(const QString &path)
 {
     QFile file(path);
+    if (!file.exists()) {
+        qCritical(QString("File %1 doesn't exist").arg(path).toLocal8Bit().data());
+        return;
+    }
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCritical("Can not open SynTagRus.xml");
+        qCritical(QString("Can not open %1").arg(path).toLocal8Bit().data());
         return;
     }
     QDomDocument doc;
@@ -45,23 +57,11 @@ void SynTagRusParser::parseXml(const QString &path)
     }
     file.close();
 
-    QDomElement bodyElem = doc.firstChildElement("body");
+    QDomElement bodyElem = doc.documentElement().firstChildElement("body");
     while (!bodyElem.isNull()){
-//        QDomElement bodyElem = bodyNode.toElement();
-//        if (bodyElem.isNull()) {
-//            qWarning("bodyNode not an Element");
-//            continue;
-//        }
-
         QDomElement sequenceElem =  bodyElem.firstChildElement("S");
         while (!sequenceElem.isNull()) {
-//            QDomElement sequenceElem = sequenceNode.toElement();
-//            if (sequenceElem.isNull()) {
-//                qWarning("sequenceNode not an Element");
-//                continue;
-//            }
-
-            parseSequence(sequenceElem);
+            parseSequence(sequenceElem, path + ':' + sequenceElem.attribute("ID"));
 
             sequenceElem = sequenceElem.nextSiblingElement("S");
         }
@@ -70,7 +70,7 @@ void SynTagRusParser::parseXml(const QString &path)
     }
 }
 
-void SynTagRusParser::parseSequence(const QDomElement &sequenceElement)
+void SynTagRusParser::parseSequence(const QDomElement &sequenceElement, const QString &tmp)
 {
     QMap<int, QStringList> rules;
     QMap<int, QString> idToFeature;
@@ -86,20 +86,21 @@ void SynTagRusParser::parseSequence(const QDomElement &sequenceElement)
         else
             dom = domAttr.value().toInt();
 
-        if(dom == 0){
+        if (dom == 0){
             qWarning(QString("DOM attribute conversion error %1").arg(domAttr.value()).toLocal8Bit().data());
             continue;
         }
 
         int id = wordElement.attributeNode("ID").value().toInt();
-        if(id == 0){
+        if (id == 0){
             qWarning(QString("ID attribute conversion error %1").arg(wordElement.text()).toLocal8Bit().data());
             continue;
         }
 
         QString feature = wordElement.attributeNode("FEAT").value();
-        if(feature.isEmpty()){
-            qWarning(QString("FEAT attribute error %1").arg(wordElement.text()).toLocal8Bit().data());
+        if (feature.isEmpty()){
+            if (wordElement.attribute("NODETYPE") != "FANTOM")
+                qWarning(QString("FEAT attribute error %1").arg(tmp).toLocal8Bit().data());
             continue;
         }
 
@@ -131,6 +132,8 @@ void SynTagRusParser::parseSequence(const QDomElement &sequenceElement)
         }
 
         addCNFRules(i, idToFeature);
+
+        i++;
     }
 }
 
@@ -139,10 +142,15 @@ void SynTagRusParser::insertRule(QMap<int, QStringList> *rules, int dom, QString
     QStringList sl;
     sl << link << feature;  // order is important
 
-    if (rules->contains(dom))
+    if (rules->contains(dom)) {
         (*rules)[dom].append(sl);
-    else
+//        qDebug() << QString("rules[%1].append(%2)").arg(QString::number(dom)).arg(sl.join(" "));
+    }
+    else {
         rules->insert(dom, sl);
+//        qDebug() << "rules insert" << dom << sl;
+    }
+
 }
 
 void SynTagRusParser::addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature)

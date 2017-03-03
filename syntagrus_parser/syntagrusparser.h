@@ -25,7 +25,7 @@ public:
      * \brief Parsing SynTagRus
      * Function parsing all .tgt files in the setted by setDirectory(<path>) function
      */
-    void parse();
+    void parse(const QString &path = QString());
 
     /*!
      * \brief Call it after parse() to get resulting Grammar
@@ -41,7 +41,7 @@ public:
 
 private:
     void parseXml(const QString &path);
-    void parseSequence(const QDomElement &sequenceElement);
+    void parseSequence(const QDomElement &sequenceElement, const QString &tmp);
     static void insertRule(QMap<int, QStringList> *rules, int dom, QString link, QString feature);
     void addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature);
     QString generateUniqueName() const;
