@@ -3,7 +3,7 @@ TEMPLATE = subdirs
 CONFIG +=  ordered
 
 SUBDIRS += \
-    cnf_grammar \
+    rutextparser_extensions \
     syntagrus_parser \
-    cyk_analyzer \
-    unit_tests
+    cyk_syntactical_analyzer \
+    unit_tests \

@@ -24,13 +24,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 include(../link_projects_include.pri)
-include(../cnf_grammar_include.pri)
+include(../rutextparser_extensions_include.pri)
 
 
-SOURCES += syntagrusparser.cpp
+SOURCES += \
+    treeparser.cpp \
+    corpora_parsing/recordincorpora.cpp \
+    corpora_parsing/recordnode.cpp \
+    corpora_parsing/sentenceincorpora.cpp \
+    corpora_parsing/treecorpora.cpp \
+    grammar/cnfgrammar.cpp \
+    grammar/rulecnfgrammar.cpp \
+    corpora_parsing/syntagrusparser.cpp
 
-HEADERS += syntagrusparser.h\
-        syntagrus_parser_global.h
+HEADERS +=\
+        syntagrus_parser_global.h \
+    treeparser.h \
+    corpora_parsing/recordincorpora.h \
+    corpora_parsing/recordnode.h \
+    corpora_parsing/sentenceincorpora.h \
+    corpora_parsing/treecorpora.h \
+    grammar/cnfgrammar.h \
+    grammar/rulecnfgrammar.h \
+    corpora_parsing/syntagrusparser.h
 
 unix {
     target.path = /usr/lib
