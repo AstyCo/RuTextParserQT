@@ -45,7 +45,8 @@ void SynTagRusParser::parse(const QString &path)
     QDirIterator it(synTagRusPath, QStringList() << "*.tgt", QDir::Files, QDirIterator::Subdirectories);
     int kk = 0;
     while (it.hasNext()) {
-
+//        if (kk > 10)
+//            return;
 
         parseXml(it.next());
         if (kk++ % 100 == 0) {
@@ -131,7 +132,7 @@ SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElem
 {
     SentenceInCorpora resultSentence;
 
-    QMap<int, RecordInCorpora *> domToRecord;
+    QMultiMap<int, RecordInCorpora > domToRecord;
 
     QDomElement wordElement = sentenceElement.firstChildElement("W");
     while (!wordElement.isNull()) {
@@ -163,6 +164,7 @@ SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElem
             if (wordElement.attribute("NODETYPE") != "FANTOM")
                 resultSentence.setError(QString("FEAT attribute error %1").arg(_debug).toLocal8Bit().data());
 
+            resultSentence.setSkip();
             wordElement = wordElement.nextSiblingElement("W");
             continue;
         }
@@ -172,45 +174,34 @@ SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElem
         QString word = wordElement.text();
 
 
-        domToRecord.insert(dom, new RecordInCorpora(dom, feature, id, lemma, link, word));
-
-//        // make rules
-//        if (dom == -1)  // _root
-//            rules.insert(dom, QStringList(feature));
-//        else
-//            insertRule(&rules, dom, link, feature);
-
+        domToRecord.insert(dom, RecordInCorpora(dom, feature, id, lemma, link, word));
 
         // make step
         wordElement = wordElement.nextSiblingElement("W");
+
+        resultSentence.append(feature);
     }
 
     // filling sentence by records
 
     addByDom(&resultSentence, -1, domToRecord);
     return resultSentence;
-
-//    // leading in CNF
-//    QMap<int, QStringList>::iterator i(rules.begin());
-//    while (i != rules.end()) {
-//        if (i.value().isEmpty()) {
-//            qCritical("Leading in CNF :: rule with Empty right side");
-//            return;
-//        }
-
-//        addCNFRules(i, idToRecord);
-
-//        i++;
-    //    }
 }
 
-void SynTagRusParser::addByDom(SentenceInCorpora *sentence, int dom, QMap<int, RecordInCorpora *> &domToRecord)
+void SynTagRusParser::addByDom(SentenceInCorpora *sentence, int dom, QMultiMap<int, RecordInCorpora> &domToRecord)
 {
     int countOfRoot = 0;
-    QMap<int, RecordInCorpora *>::iterator i = domToRecord.find( dom );
-    while(i != domToRecord.end() && i.key() == dom) {
+    QMultiMap<int, RecordInCorpora>::const_iterator i = domToRecord.constFind( dom );
+//    int count = 0;
+    while(i != domToRecord.constEnd() && i.key() == dom) {
+//        qDebug() << "count" << ++count;
+//        qDebug() << QString("dom[%1] word[%2] itsDom(%3)")
+//                    .arg(QString::number(dom))
+//                    .arg(i.value()._word)
+//                    .arg(i.value()._dom);
+
         if (dom == -1) {   // set root
-            sentence->setRoot(new RecordNode(*i.value()));
+            sentence->setRoot(new RecordNode(i.value()));
 
             if(++countOfRoot !=1) {
                 sentence->setError(QString("found more than one _root DOM %1").arg(_debug));
@@ -224,68 +215,12 @@ void SynTagRusParser::addByDom(SentenceInCorpora *sentence, int dom, QMap<int, R
                 return;
             }
 
-            node->append(new RecordNode(*i.value()));
+            node->append(new RecordNode(i.value()));
         }
 
         // call this recursively
-        addByDom(sentence, i.value()->_id, domToRecord);
+        addByDom(sentence, i.value()._id, domToRecord);
 
         ++i;
     }
 }
-
-//void SynTagRusParser::insertRule(QMap<int, QStringList> *rules, int dom, QString link, QString feature)
-//{
-//    QStringList sl;
-//    sl << link << feature;  // order is important
-
-//    if (rules->contains(dom)) {
-//        (*rules)[dom].append(sl);
-////        qDebug() << QString("rules[%1].append(%2)").arg(QString::number(dom)).arg(sl.join(" "));
-//    }
-//    else {
-//        rules->insert(dom, sl);
-////        qDebug() << "rules insert" << dom << sl;
-//    }
-
-//}
-
-//void SynTagRusParser::addCNFRules(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature)
-//{
-//    if (i.key() == -1) {
-//       _grammar->addRule(RuleCNFGrammar("_root", i.value().first()));
-//    }
-//    else if (i.value().size() < 2) {
-//        qWarning("SynTagRusParser::addCNFRules");
-//        return;
-//    }
-//    else {
-//        generationMethod1(i, idToFeature);
-//    }
-//}
-
-//QString SynTagRusParser::generateUniqueName() const
-//{
-//    static long long n = 1;
-
-//    return "S" + QString::number(n++);
-//}
-
-//void SynTagRusParser::generationMethod1(QMap<int, QStringList>::Iterator &i, const QMap<int, QString> &idToFeature)
-//{
-//    QString lastGeneratedName = generateUniqueName();
-
-//    // creating first rule
-//    _grammar->addRule(RuleCNFGrammar(idToFeature[i.key()], idToFeature[i.key()], lastGeneratedName));
-
-//    // creating most rules
-//    for (int j = 0; j < i.value().size() - 1; ++j) {
-//        QString newGeneratedName = generateUniqueName();
-//        _grammar->addRule(RuleCNFGrammar(lastGeneratedName, i.value()[j], newGeneratedName));
-//        lastGeneratedName = newGeneratedName;
-//    }
-
-//    // creating last rule
-
-
-//}

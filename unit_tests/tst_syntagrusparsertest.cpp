@@ -3,6 +3,7 @@
 
 #include "corpora_parsing/syntagrusparser.h"
 #include "treeparser.h"
+#include "cyksyntacticalanalyzer.h"
 
 class SynTagRusParserTest : public QObject
 {
@@ -11,20 +12,34 @@ class SynTagRusParserTest : public QObject
     SynTagRusParser _syntagrusParser;
     TreeParser _grammarParser;
 public:
-    SynTagRusParserTest();
+    SynTagRusParserTest() { }
 
 private:
     void parsingTest();
     void treeCorporaSerializationTest();
     void grammarSerializationTest();
+    void testCYKSyntacticalAnalyzer();
 
-private Q_SLOTS:
+
+    void wholeTest();
     void test();
+private Q_SLOTS:
+    void withoutSerialization();
 
 };
 
-SynTagRusParserTest::SynTagRusParserTest()
+void SynTagRusParserTest::test()
 {
+//    QBENCHMARK {
+
+    _syntagrusParser.deserializeTreeCorpora();
+    qDebug() << "Size of TreeCorpora after deserialization" << _syntagrusParser.getTreeCorpora()->size();
+    _grammarParser.deserializeGrammar();
+    qDebug() << "Grammar size after serialization" << _grammarParser.getGrammar()->size();
+
+    testCYKSyntacticalAnalyzer();
+
+//    }
 }
 
 void SynTagRusParserTest::parsingTest()
@@ -37,8 +52,6 @@ void SynTagRusParserTest::parsingTest()
         qDebug() << _syntagrusParser.getTreeCorpora()->size();
     }
 
-//    QVERIFY2(!_parser.getGrammar()->isEmpty(), "CNFGrammar is empty after parsing");
-    //    qDebug() << _parser.getGrammar()->size();
 }
 
 void SynTagRusParserTest::treeCorporaSerializationTest()
@@ -70,18 +83,57 @@ void SynTagRusParserTest::grammarSerializationTest()
              "Grammar of different size after serialization/deserialization");
 }
 
-void SynTagRusParserTest::test()
-{
-    QBENCHMARK {
-//        parsingTest();
+AmbigiousStringVector toAmbigious(const QStringList &sentence) {
+    AmbigiousStringVector res;
 
-    _syntagrusParser.deserializeTreeCorpora();
+    foreach (const QString &word, sentence){
+        QList<QStringList> wlist;
+        wlist.append(QStringList(word));
+        res.append(wlist);
+    }
+    return res;
+}
+
+void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
+{
+    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->at(0).at(4);
+    Q_ASSERT(!sentence.skip());
+    qDebug() << "sentence" << sentence.qDebugSentence();
+
+    qDebug() << "starting analyzing";
+
+    Sentences analyzedSentences = CYKSyntacticalAnalyzer::analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
+
+    QVERIFY2(!analyzedSentences.isEmpty(), "not found");
+    qDebug() << "analyzedSentences";
+    foreach (const QStringList &sl, analyzedSentences)
+        qDebug() << "\tSentence:" << sl;
+}
+
+void SynTagRusParserTest::withoutSerialization()
+{
+    parsingTest();
+    _grammarParser.parseTree(*_syntagrusParser.getTreeCorpora());
+    qDebug() << "Grammar size before serialization" << _grammarParser.getGrammar()->size();
+
+    _syntagrusParser.serializeTreeCorpora();
+    _grammarParser.serializeGrammar();
+
+    testCYKSyntacticalAnalyzer();
+}
+
+void SynTagRusParserTest::wholeTest()
+{
+    parsingTest();
+    treeCorporaSerializationTest();
+    grammarSerializationTest();
+
     qDebug() << "Size of TreeCorpora after deserialization" << _syntagrusParser.getTreeCorpora()->size();
-    _grammarParser.deserializeGrammar();
     qDebug() << "Grammar size after serialization" << _grammarParser.getGrammar()->size();
 
-    }
+    testCYKSyntacticalAnalyzer();
 }
+
 
 
 QTEST_APPLESS_MAIN(SynTagRusParserTest)

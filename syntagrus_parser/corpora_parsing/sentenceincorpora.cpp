@@ -20,8 +20,30 @@ RecordNode *SentenceInCorpora::nodeById(int id) const
     return nodeH(id, _root, compareById);
 }
 
+QStringList SentenceInCorpora::qDebugSentence() const
+{
+    return _qDebugSentence;
+}
+
+void SentenceInCorpora::append(const QString &str)
+{
+    _qDebugSentence.append(str);
+}
+
+void SentenceInCorpora::setSkip()
+{
+    _skip = true;
+}
+
+bool SentenceInCorpora::skip() const
+{
+    return _skip;
+}
+
+
+
 SentenceInCorpora::SentenceInCorpora(RecordNode *rootRecord)
-    : _root(rootRecord)
+    : _skip(false), _root(rootRecord)
 {
 
 }
@@ -29,6 +51,8 @@ SentenceInCorpora::SentenceInCorpora(RecordNode *rootRecord)
 QDataStream &operator<<(QDataStream &ds, const SentenceInCorpora &s)
 {
     ds << s._error;
+    ds << s._qDebugSentence;
+    ds << s._skip;
 
     if (s._root) {
         ds << true;
@@ -43,6 +67,8 @@ QDataStream &operator<<(QDataStream &ds, const SentenceInCorpora &s)
 QDataStream &operator>>(QDataStream &ds, SentenceInCorpora &s)
 {
     ds >> s._error;
+    ds >> s._qDebugSentence;
+    ds >> s._skip;
 
     bool rootExists;
     ds >> rootExists;

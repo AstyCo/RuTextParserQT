@@ -1,16 +1,21 @@
 #ifndef SENTENCEINCORPORA_H
 #define SENTENCEINCORPORA_H
 
+#include "syntagrus_parser_global.h"
+
 #include "recordincorpora.h"
 #include "recordnode.h"
 
 #include <QList>
+#include <QStringList>
 #include <QDataStream>
 
 
-class SentenceInCorpora
+class SYNTAGRUS_PARSERSHARED_EXPORT SentenceInCorpora
 {
     QString _error;
+    QStringList _qDebugSentence;
+    bool _skip;
     RecordNode *_root;
 public:
     SentenceInCorpora(RecordNode *rootRecord = NULL);
@@ -23,6 +28,11 @@ public:
     void setRoot(RecordNode * const root);
 
     RecordNode *nodeById(int id) const;
+
+    QStringList qDebugSentence() const;
+    void append(const QString &str);
+    void setSkip();
+    bool skip() const;
 
     friend QDataStream &operator<<(QDataStream &ds, const SentenceInCorpora &s);
     friend QDataStream &operator>>(QDataStream &ds, SentenceInCorpora &s);

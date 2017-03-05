@@ -8,18 +8,20 @@
 #include <QDataStream>
 #include <QVector>
 #include <QMap>
+#include <QHash>
 
 class SYNTAGRUS_PARSERSHARED_EXPORT CNFGrammar
 {
     QString _dumpFilename;
 public:
     CNFGrammar();
+    ~CNFGrammar();
 
     /*!
      * \brief Adds rule to grammar
      * \param rule Grammar rule in chomsky normal form
      */
-    void append(const RuleCNFGrammar &rule);
+    void append(RuleCNFGrammar *rule);
 
     /*!
      * \brief Clears grammar
@@ -45,24 +47,29 @@ public:
 
     bool isEmpty() const;
     int size() const;
-    const QVector<RuleCNFGrammar> &rules() const;
+    const QVector<RuleCNFGrammar *> &rules() const;
 
-    QStringList getNonterminals(const QString &first);
-    QStringList getNonterminals(const QString &first, const QString &second);
+    NonterminalList getNonterminals(const Terminal &terminal) const;
+    NonterminalList getNonterminals(const Nonterminal &first, const Nonterminal &second) const;
+    NonterminalList getNonterminals(const NonterminalList &firsts, const NonterminalList &seconds) const;
+
+    QStringList toSentence(const QVector<NonterminalList> &row) const;
 
 private:
-    static QString concatTerminals(const QString &first, const QString &second);
+    static NonterminalPair concatTerminals(const Nonterminal &first, const Nonterminal &second);
     void clearCache();
     void fillCache(RuleCNFGrammar *rule);
 
 private:
-    QVector<RuleCNFGrammar> _rules;
+    QVector<RuleCNFGrammar*> _rules;
 
-    QMap<QString, const RuleCNFGrammar *> _mappingLeftToRules;
+    QMultiHash<Nonterminal, const RuleCNFGrammar *> _mappingLeftToRules;
 
-    QMap<QString, const RuleCNFGrammar *> _mappingFirstToRules;
-    QMap<QString, const RuleCNFGrammar *> _mappingSecondToRules;
-    QMap<QString, const RuleCNFGrammar *> _mappingRightToRules;
+    QMultiHash<Nonterminal, const RuleCNFGrammar *> _mappingFirstToRules;
+    QMultiHash<Nonterminal, const RuleCNFGrammar *> _mappingSecondToRules;
+    QMultiHash<NonterminalPair, const RuleCNFGrammar *> _mappingRightToRules;
+
+    QMultiHash<Terminal, const RuleCNFGrammar *> _mappingTerminalToRules;
 
     /*!
      * Uses for serialization
@@ -76,7 +83,7 @@ inline bool CNFGrammar::isEmpty() const { return _rules.isEmpty();}
 
 inline int CNFGrammar::size() const { return _rules.size();}
 
-inline const QVector<RuleCNFGrammar> &CNFGrammar::rules() const { return _rules;}
+inline const QVector<RuleCNFGrammar*> &CNFGrammar::rules() const { return _rules;}
 
 /// SERIALIZATION / DESERIALIZATION
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr);

@@ -10,13 +10,4 @@
 typedef QVector<SentenceInCorpora> TextInCorpora;
 typedef QVector<TextInCorpora> TreeCorpora;
 
-//class TreeCorpora
-//{
-//    QVector<TextInCorpora> _texts;
-//public:
-//    TreeCorpora();
-
-//    QVector<TextInCorpora> &texts();
-//};
-
 #endif // TREECORPORA_H

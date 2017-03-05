@@ -44,7 +44,7 @@ public:
 private:
     void parseXml(const QString &path);
     SentenceInCorpora parseSentence(const QDomElement &sentenceElement);
-    void addByDom(SentenceInCorpora *sentence, int dom, QMap<int, RecordInCorpora *> &idToRecord);
+    void addByDom(SentenceInCorpora *sentence, int dom, QMultiMap<int, RecordInCorpora> &idToRecord);
 };
 
 #endif // SYNTAGRUSPARSER_H

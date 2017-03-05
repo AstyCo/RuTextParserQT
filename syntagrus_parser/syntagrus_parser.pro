@@ -32,7 +32,6 @@ SOURCES += \
     corpora_parsing/recordincorpora.cpp \
     corpora_parsing/recordnode.cpp \
     corpora_parsing/sentenceincorpora.cpp \
-    corpora_parsing/treecorpora.cpp \
     grammar/cnfgrammar.cpp \
     grammar/rulecnfgrammar.cpp \
     corpora_parsing/syntagrusparser.cpp

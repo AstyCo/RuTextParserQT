@@ -34,9 +34,13 @@ const CNFGrammar *TreeParser::getGrammar() const
     return &_grammar;
 }
 
+#include <QDebug>
+
 void TreeParser::serializeGrammar() const
 {
     ExtensionsSerialization::dumpToFile(_dumpFilenameGrammar, _grammar);
+
+    qDebug() << "Grammar serialized";
 }
 
 void TreeParser::deserializeGrammar()
@@ -48,10 +52,10 @@ void TreeParser::deserializeGrammar()
 
 void TreeParser::parseSentence(const SentenceInCorpora &sentence)
 {
-    parseNode("_root", sentence.root());
+    parseNode(_ROOT, sentence.root());
 }
 
-void TreeParser::parseNode(const QString &leftNonterminal, const RecordNode *node)
+void TreeParser::parseNode(const Nonterminal &leftNonterminal, const RecordNode *node)
 {
     const QList<RecordNode *> &childNodes = node->childNodes();
 
@@ -82,10 +86,10 @@ void TreeParser::parseNode(const QString &leftNonterminal, const RecordNode *nod
                 produceDotNonterminalRule(leftNonterminal, node, leftRules, false);
             }
             else {
-                QString newFirst = generateUniqueNonterminalName();
-                QString newSecond = generateUniqueNonterminalName();
+                Nonterminal newFirst = generateUniqueNonterminalName();
+                Nonterminal newSecond = generateUniqueNonterminalName();
 
-                _grammar.append(RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
+                _grammar.append(new RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
 
                 produceNonterminalRules(newFirst, leftRules);
                 produceDotNonterminalRule(newSecond, node, rightRules);
@@ -94,20 +98,20 @@ void TreeParser::parseNode(const QString &leftNonterminal, const RecordNode *nod
     }
 }
 
-void TreeParser::produceTerminalRule(const QString &leftNonterminal, const RecordNode *node)
+void TreeParser::produceTerminalRule(const Nonterminal &leftNonterminal, const RecordNode *node)
 {
-    _grammar.append(RuleCNFGrammar(leftNonterminal, node->record()._feat));
+    _grammar.append(new RuleCNFGrammar(leftNonterminal, node->record()._feat));
 }
 
-void TreeParser::produceNonterminalRules(QString leftNonterminal, QList<RecordNode *> &nodes)
+void TreeParser::produceNonterminalRules(Nonterminal leftNonterminal, QList<RecordNode *> &nodes)
 {
     Q_ASSERT(!nodes.isEmpty());
 
     for (int i = 0; i < nodes.size() - 1; ++i) {
-        QString newFirst = generateUniqueNonterminalName();
-        QString newSecond = generateUniqueNonterminalName();
+        Nonterminal newFirst = generateUniqueNonterminalName();
+        Nonterminal newSecond = generateUniqueNonterminalName();
 
-        _grammar.append(RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
+        _grammar.append(new RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
         parseNode(newFirst, nodes[i]);
 
         leftNonterminal = newSecond;
@@ -116,25 +120,27 @@ void TreeParser::produceNonterminalRules(QString leftNonterminal, QList<RecordNo
     parseNode(leftNonterminal, nodes.last());
 }
 
-void TreeParser::produceDotNonterminalRule(const QString &leftNonterminal,
+void TreeParser::produceDotNonterminalRule(const Nonterminal &leftNonterminal,
                                            const RecordNode *node,
                                            QList<RecordNode *> &nodes, bool dotThenRule)
 {
-    QString newDotRule = generateUniqueNonterminalName();
-    QString newDotRuleSecond = generateUniqueNonterminalName();
+    Nonterminal newDotRule = generateUniqueNonterminalName();
+    Nonterminal newDotRuleSecond = generateUniqueNonterminalName();
 
     if(dotThenRule)
-        _grammar.append(RuleCNFGrammar(leftNonterminal, newDotRule, newDotRuleSecond));
+        _grammar.append(new RuleCNFGrammar(leftNonterminal, newDotRule, newDotRuleSecond));
     else
-        _grammar.append(RuleCNFGrammar(leftNonterminal, newDotRuleSecond, newDotRule));
+        _grammar.append(new RuleCNFGrammar(leftNonterminal, newDotRuleSecond, newDotRule));
 
     produceTerminalRule(newDotRule, node);
     produceNonterminalRules(newDotRuleSecond, nodes);
 }
 
-QString TreeParser::generateUniqueNonterminalName() const
-{
-    static long long n = 0;
+#include <QDebug>
 
-    return "_" + QString::number(n++);
+Nonterminal TreeParser::generateUniqueNonterminalName() const
+{
+    static Nonterminal n = FIRST_EMPTY_NONTERMINAL;
+
+    return n++;
 }

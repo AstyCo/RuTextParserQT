@@ -6,7 +6,7 @@
 
 QT       -= gui
 
-TARGET = cyk_analyzer
+TARGET = cyk_syntactical_analyzer
 TEMPLATE = lib
 
 DEFINES += CYK_SYNTACTICAL_ANALYZER_LIBRARY
@@ -27,11 +27,13 @@ include(../rutextparser_extensions_include.pri)
 include(../syntagrus_parser_include.pri)
 
 SOURCES += \
-    cyksyntacticalanalyzer.cpp
+    cyksyntacticalanalyzer.cpp \
+    cykmatrix.cpp
 
 HEADERS += \
     cyk_syntactical_analyzer_global.h \
-    cyksyntacticalanalyzer.h
+    cyksyntacticalanalyzer.h \
+    cykmatrix.h
 
 unix {
     target.path = /usr/lib
