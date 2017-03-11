@@ -18,10 +18,12 @@ TreeParser::TreeParser()
 
 void TreeParser::parseTree(const TreeCorpora &treeCorpora)
 {
-    foreach (const TextInCorpora & text, treeCorpora)
-        foreach (const SentenceInCorpora &sentence, text) {
-            parseSentence(sentence);
-        }
+//    foreach (const TextInCorpora & text, treeCorpora)
+//        foreach (const SentenceInCorpora &sentence, text) {
+//            parseSentence(sentence);
+//        }
+    foreach(const SentenceInCorpora &sentence, treeCorpora.sentencesBySize())
+        parseSentence(sentence);
 }
 
 CNFGrammar *TreeParser::getGrammar()

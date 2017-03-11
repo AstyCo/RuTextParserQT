@@ -36,7 +36,8 @@ SOURCES += \
     grammar/rulecnfgrammar.cpp \
     corpora_parsing/syntagrusparser.cpp \
     corpora_parsing/wordincorpora.cpp \
-    corpora_parsing/sentenceinfo.cpp
+    corpora_parsing/sentenceinfo.cpp \
+    corpora_parsing/treecorpora.cpp
 
 HEADERS +=\
         syntagrus_parser_global.h \

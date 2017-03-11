@@ -98,7 +98,7 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
-    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->at(0).at(1);
+    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(5).value();
     Q_ASSERT(!sentence.skip());
     qDebug() << "sentence" << sentence.qDebugSentence().wordList()
              << '\n' << sentence.qDebugSentence().featList();
