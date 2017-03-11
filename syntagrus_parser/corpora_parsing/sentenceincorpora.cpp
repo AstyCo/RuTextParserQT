@@ -10,6 +10,16 @@ void SentenceInCorpora::setRoot(RecordNode * const root)
     _root = root;
 }
 
+void SentenceInCorpora::updateSentence()
+{
+    _qDebugSentence.clear();
+    if (!_root)
+        return;
+
+    _qDebugSentence.resize(_root->size());
+    fillSentenceInfo();
+}
+
 bool compareById(const RecordInCorpora &record, const int &id)
 {
     return record._id == id;
@@ -20,14 +30,14 @@ RecordNode *SentenceInCorpora::nodeById(int id) const
     return nodeH(id, _root, compareById);
 }
 
-QStringList SentenceInCorpora::qDebugSentence() const
+const SentenceInfo &SentenceInCorpora::qDebugSentence() const
 {
     return _qDebugSentence;
 }
 
-void SentenceInCorpora::append(const QString &str)
+int SentenceInCorpora::size() const
 {
-    _qDebugSentence.append(str);
+    return _qDebugSentence.size();
 }
 
 void SentenceInCorpora::setSkip()
@@ -38,6 +48,33 @@ void SentenceInCorpora::setSkip()
 bool SentenceInCorpora::skip() const
 {
     return _skip;
+}
+
+void SentenceInCorpora::fillSentenceInfo(RecordNode *node)
+{
+    if (!node) {
+        if (!_root)
+            return;
+
+        node = _root;
+    }
+
+    const RecordInCorpora &record = node->record();
+
+    _qDebugSentence[record._id - 1] = WordInCorpora(record._feat,
+                                                    record._id,
+                                                    record._word);
+
+    // insert link
+    if (record._dom != -1) {
+        Q_ASSERT(_qDebugSentence[record._dom - 1].isValid());
+        // _qDebugSentence[record._dom] definetly initialized already
+        _qDebugSentence[record._dom - 1].append(makeSintRel(record._dom, record._link));
+    }
+
+    // recursion
+    foreach(RecordNode * childNode, node->childNodes())
+        fillSentenceInfo(childNode);
 }
 
 

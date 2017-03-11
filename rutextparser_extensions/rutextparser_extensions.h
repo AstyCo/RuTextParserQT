@@ -6,6 +6,18 @@
 #include <QFile>
 #include <QDataStream>
 
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString,
+                                                           const QString &arg1 = QString(),
+                                                           const QString &arg2 = QString(),
+                                                           const QString &arg3 = QString()
+                                                           );
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateString,
+                                                           const QString &arg1 = QString(),
+                                                           const QString &arg2 = QString(),
+                                                           const QString &arg3 = QString()
+                                                           );
+
+
 namespace ExtensionsSerialization {
 
 template <typename T>

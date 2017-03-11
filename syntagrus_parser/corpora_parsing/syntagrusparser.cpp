@@ -178,13 +178,13 @@ SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElem
 
         // make step
         wordElement = wordElement.nextSiblingElement("W");
-
-        resultSentence.append(feature);
     }
 
     // filling sentence by records
 
     addByDom(&resultSentence, -1, domToRecord);
+    resultSentence.updateSentence();
+
     return resultSentence;
 }
 

@@ -44,9 +44,9 @@ public:
     RuleCNFGrammar(const Nonterminal &leftNonterminal, const Terminal &terminal);
     RuleCNFGrammar(const Nonterminal &left, const Nonterminal &first, const Nonterminal &second = EMPTY_NONTERMINAL);
 
-    bool isEpsilonRule() const;
-    bool isTerminalRule() const;
-    bool isNonterminalRule() const;
+    inline bool isEpsilonRule() const;
+    inline bool isTerminalRule() const;
+    inline bool isNonterminalRule() const;
 
     RuleType _type;
     Nonterminal _leftNonterminal;

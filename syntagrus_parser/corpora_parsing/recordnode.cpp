@@ -45,6 +45,15 @@ void RecordNode::append(RecordNode *node)
     _childNodes.append(node);
 }
 
+int RecordNode::size() const
+{
+    int result = 1;
+    foreach(const RecordNode *childNode, _childNodes)
+        result += childNode->size();
+
+    return result;
+}
+
 
 
 

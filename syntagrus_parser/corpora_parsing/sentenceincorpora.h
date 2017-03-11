@@ -5,32 +5,39 @@
 
 #include "recordincorpora.h"
 #include "recordnode.h"
+#include "wordincorpora.h"
+#include "sentenceinfo.h"
 
 #include <QList>
+#include <QVector>
 #include <QStringList>
 #include <QDataStream>
+
+
 
 
 class SYNTAGRUS_PARSERSHARED_EXPORT SentenceInCorpora
 {
     QString _error;
-    QStringList _qDebugSentence;
+    SentenceInfo _qDebugSentence;
     bool _skip;
     RecordNode *_root;
 public:
     SentenceInCorpora(RecordNode *rootRecord = NULL);
 
-    bool isValid() const;
-    QString error() const;
-    void setError(const QString &error);
+    inline bool isValid() const;
+    inline QString error() const;
+    inline void setError(const QString &error);
 
     RecordNode *root() const;
     void setRoot(RecordNode * const root);
+    void updateSentence();
 
     RecordNode *nodeById(int id) const;
 
-    QStringList qDebugSentence() const;
-    void append(const QString &str);
+    const SentenceInfo &qDebugSentence() const;
+    int size() const;
+
     void setSkip();
     bool skip() const;
 
@@ -38,6 +45,7 @@ public:
     friend QDataStream &operator>>(QDataStream &ds, SentenceInCorpora &s);
 
 private:
+    void fillSentenceInfo(RecordNode * node = NULL);
     template <typename T>
     RecordNode *nodeH(const T &value, RecordNode *node,
                       bool (*compareFunction)(const RecordInCorpora &, const T &) ) const;

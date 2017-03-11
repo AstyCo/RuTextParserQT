@@ -26,6 +26,7 @@ public:
 
     void append(RecordNode *node);
 
+    int size() const;
     friend QDataStream &operator<<(QDataStream &ds, const RecordNode &r);
     friend QDataStream &operator>>(QDataStream &ds, RecordNode &r);
 };

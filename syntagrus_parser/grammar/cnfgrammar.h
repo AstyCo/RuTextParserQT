@@ -45,9 +45,9 @@ public:
      */
     void loadFromDump();
 
-    bool isEmpty() const;
-    int size() const;
-    const QVector<RuleCNFGrammar *> &rules() const;
+    inline bool isEmpty() const;
+    inline int size() const;
+    inline const QVector<RuleCNFGrammar *> &rules() const;
 
     NonterminalList getNonterminals(const Terminal &terminal) const;
     NonterminalList getNonterminals(const Nonterminal &first, const Nonterminal &second) const;
