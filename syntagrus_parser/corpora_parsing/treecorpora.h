@@ -13,9 +13,11 @@ typedef QVector<SentenceInCorpora> TextInCorpora;
 class SYNTAGRUS_PARSERSHARED_EXPORT TreeCorpora
 {
     QMultiHash<int, SentenceInCorpora> _sentencesBySize;
+    QList<QString> _features;
 public:
     inline const QMultiHash<int, SentenceInCorpora> &sentencesBySize() const { return _sentencesBySize;}
     inline QMultiHash<int, SentenceInCorpora> &sentencesBySize() { return _sentencesBySize;}
+    inline const QList<QString> &features() const { return _features;}
 
     void append(const SentenceInCorpora &text);
     void append(const TextInCorpora &text);

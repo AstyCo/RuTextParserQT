@@ -16,12 +16,18 @@ TreeParser::TreeParser()
 #endif
 }
 
-void TreeParser::parseTree(const TreeCorpora &treeCorpora)
+void TreeParser::parseTree(const OptimizedTreeCorpora &treeCorpora)
 {
 //    foreach (const TextInCorpora & text, treeCorpora)
 //        foreach (const SentenceInCorpora &sentence, text) {
 //            parseSentence(sentence);
 //        }
+    foreach(const OptimizedSentence &sentence, treeCorpora.multihashSentences())
+        parseSentence(sentence);
+}
+
+void TreeParser::parseTree(const TreeCorpora &treeCorpora)
+{
     foreach(const SentenceInCorpora &sentence, treeCorpora.sentencesBySize())
         parseSentence(sentence);
 }
@@ -51,6 +57,59 @@ void TreeParser::deserializeGrammar()
 
     ExtensionsSerialization::loadFromDump(_dumpFilenameGrammar, _grammar);
 }
+
+void TreeParser::parseSentence(const OptimizedSentence &sentence)
+{
+    parseByDom(sentence, _ROOT, -1);
+
+}
+
+void TreeParser::parseByDom(const OptimizedSentence &sentence,
+                            const Nonterminal &leftNonterminal,
+                            const WordIndex &dom)
+{
+//    QList<OptimizedWord> childWords = sentence.
+
+//    if (childNodes.isEmpty()) {
+//        produceTerminalRule(leftNonterminal, node);
+//    }
+//    else {
+//        QList<RecordNode *> leftRules;
+//        QList<RecordNode *> rightRules;
+
+//        // separate by order: going before or after?
+//        foreach (RecordNode *rnode, childNodes) {
+//            if (rnode->record().before(node->record()))
+//                leftRules.append(rnode);
+//            else
+//                rightRules.append(rnode);
+//        }
+
+//        if (leftRules.isEmpty()) {
+//            if (rightRules.isEmpty()) {
+//                Q_ASSERT(false);
+//                return;
+//            }
+//            produceDotNonterminalRule(leftNonterminal, node, rightRules);
+//        }
+//        else {
+//            if (rightRules.isEmpty()) {
+//                produceDotNonterminalRule(leftNonterminal, node, leftRules, false);
+//            }
+//            else {
+//                Nonterminal newFirst = generateUniqueNonterminalName();
+//                Nonterminal newSecond = generateUniqueNonterminalName();
+
+//                _grammar.append(new RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
+
+//                produceNonterminalRules(newFirst, leftRules);
+//                produceDotNonterminalRule(newSecond, node, rightRules);
+//            }
+//        }
+//    }
+}
+
+
 
 void TreeParser::parseSentence(const SentenceInCorpora &sentence)
 {

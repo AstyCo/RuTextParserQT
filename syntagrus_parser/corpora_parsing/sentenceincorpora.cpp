@@ -62,6 +62,7 @@ void SentenceInCorpora::fillSentenceInfo(RecordNode *node)
     const RecordInCorpora &record = node->record();
 
     _qDebugSentence[record._id - 1] = WordInCorpora(record._feat,
+                                                    record._dom,
                                                     record._id,
                                                     record._word);
 

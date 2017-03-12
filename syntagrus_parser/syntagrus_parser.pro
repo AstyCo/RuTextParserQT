@@ -37,7 +37,10 @@ SOURCES += \
     corpora_parsing/syntagrusparser.cpp \
     corpora_parsing/wordincorpora.cpp \
     corpora_parsing/sentenceinfo.cpp \
-    corpora_parsing/treecorpora.cpp
+    corpora_parsing/treecorpora.cpp \
+    corpora_parsing/optimizedtreecorpora.cpp \
+    corpora_parsing/optimizedsentence.cpp \
+    corpora_parsing/optimizedword.cpp
 
 HEADERS +=\
         syntagrus_parser_global.h \
@@ -50,7 +53,10 @@ HEADERS +=\
     grammar/rulecnfgrammar.h \
     corpora_parsing/syntagrusparser.h \
     corpora_parsing/wordincorpora.h \
-    corpora_parsing/sentenceinfo.h
+    corpora_parsing/sentenceinfo.h \
+    corpora_parsing/optimizedtreecorpora.h \
+    corpora_parsing/optimizedsentence.h \
+    corpora_parsing/optimizedword.h
 
 unix {
     target.path = /usr/lib

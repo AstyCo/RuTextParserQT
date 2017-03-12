@@ -10,11 +10,6 @@ const QString &WordInCorpora::feature() const
     return _feature;
 }
 
-const QList<SintRel> &WordInCorpora::links() const
-{
-    return _links;
-}
-
 QList<SintRel> WordInCorpora::leftLinks() const
 {
     QList<SintRel> res;
@@ -50,8 +45,9 @@ WordInCorpora::WordInCorpora()
     _isValid = true;
 }
 
-WordInCorpora::WordInCorpora(const QString &feature, const SintRelIndex &index, const QString &word, const QList<SintRel> &links)
-    : _index(index),
+WordInCorpora::WordInCorpora(const QString &feature, const WordIndex &dom, const WordIndex &index, const QString &word, const QList<SintRel> &links)
+    : _dom(dom),
+      _index(index),
       _word(word),
       _feature(feature),
       _links(links)
@@ -61,6 +57,7 @@ WordInCorpora::WordInCorpora(const QString &feature, const SintRelIndex &index, 
 
 QDataStream &operator<<(QDataStream &ds, const WordInCorpora &w)
 {
+    ds << w._dom;
     ds << w._index;
     ds << w._word;
     ds << w._feature;
@@ -72,6 +69,7 @@ QDataStream &operator<<(QDataStream &ds, const WordInCorpora &w)
 
 QDataStream &operator>>(QDataStream &ds, WordInCorpora &w)
 {
+    ds >> w._dom;
     ds >> w._index;
     ds >> w._word;
     ds >> w._feature;
@@ -81,7 +79,7 @@ QDataStream &operator>>(QDataStream &ds, WordInCorpora &w)
     return ds;
 }
 
-SintRel makeSintRel(const SintRelIndex &index, const QString &sintRel)
+SintRel makeSintRel(const WordIndex &index, const QString &sintRel)
 {
     return qMakePair(index, sintRel);
 }

@@ -9,32 +9,36 @@
 #include <QDataStream>
 
 typedef unsigned int uint;
-typedef int SintRelIndex;
-typedef QPair<SintRelIndex, QString> SintRel;
+typedef int WordIndex;
+typedef QPair<WordIndex, QString> SintRel;
+typedef QList<SintRel> SintRelList;
 
-SintRel SYNTAGRUS_PARSERSHARED_EXPORT makeSintRel(const SintRelIndex &index, const QString &sintRel);
+SintRel SYNTAGRUS_PARSERSHARED_EXPORT makeSintRel(const WordIndex &index, const QString &sintRel);
 
 class SYNTAGRUS_PARSERSHARED_EXPORT WordInCorpora
 {
-    SintRelIndex _index;
+    WordIndex _dom;
+    WordIndex _index;
     QString _word;
     QString _feature;
-    QList<SintRel> _links;
+    SintRelList _links;
 
     bool _isValid;
 
 public:
     WordInCorpora();
     WordInCorpora(const QString &feature,
-                  const SintRelIndex &index,
+                  const WordIndex &dom,
+                  const WordIndex &index,
                   const QString &word = QString(),
                   const QList<SintRel> &links = QList<SintRel>());
 
-
+    const WordIndex &dom() const { return _dom;}
+    const WordIndex &index() const { return _index;}
+    const SintRelList &links() const { return _links;}
     const QString &word() const;
     const QString &feature() const;
 
-    const QList<SintRel> &links() const;
     QList<SintRel> leftLinks() const;
     QList<SintRel> rightLinks() const;
 

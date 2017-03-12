@@ -2,6 +2,7 @@
 #include <QtTest>
 
 #include "corpora_parsing/syntagrusparser.h"
+#include "corpora_parsing/optimizedtreecorpora.h"
 #include "treeparser.h"
 #include "cyksyntacticalanalyzer.h"
 
@@ -15,7 +16,6 @@ public:
     SynTagRusParserTest() { }
 
 private:
-    void parsingTest();
     void treeCorporaSerializationTest();
     void grammarSerializationTest();
     void testCYKSyntacticalAnalyzer();
@@ -23,8 +23,9 @@ private:
 
     void test();
     void wholeTest();
-private Q_SLOTS:
     void withoutSerialization();
+private Q_SLOTS:
+    void parsingTest();
 
 };
 
@@ -52,6 +53,17 @@ void SynTagRusParserTest::parsingTest()
         qDebug() << _syntagrusParser.getTreeCorpora()->size();
     }
 
+    OptimizedTreeCorpora optimized(*_syntagrusParser.getTreeCorpora());
+
+    {
+        QVERIFY2(!optimized.multihashSentences().isEmpty(), "OptimizedTreeCorpora is empty after initialization");
+        QVERIFY2(optimized.featureMapper().features.size()
+                    == optimized.featureMapper().hashFeatures.size(),
+                 "OptimizedTreeCorpora features and hashFeatures of different size");
+
+        qDebug() << "features size" << optimized.featureMapper().features.size();
+        qDebug() << "sentences size" << optimized.multihashSentences().size();
+    }
 }
 
 void SynTagRusParserTest::treeCorporaSerializationTest()

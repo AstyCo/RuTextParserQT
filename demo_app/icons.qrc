@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>rsc/icons/bars-chart.png</file>
+        <file>rsc/icons/terminal.png</file>
+    </qresource>
+</RCC>
