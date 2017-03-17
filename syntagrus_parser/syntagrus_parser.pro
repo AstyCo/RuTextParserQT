@@ -40,7 +40,8 @@ SOURCES += \
     corpora_parsing/treecorpora.cpp \
     corpora_parsing/optimizedtreecorpora.cpp \
     corpora_parsing/optimizedsentence.cpp \
-    corpora_parsing/optimizedword.cpp
+    corpora_parsing/optimizedword.cpp \
+    corpora_parsing/featuremapper.cpp
 
 HEADERS +=\
         syntagrus_parser_global.h \
@@ -56,7 +57,8 @@ HEADERS +=\
     corpora_parsing/sentenceinfo.h \
     corpora_parsing/optimizedtreecorpora.h \
     corpora_parsing/optimizedsentence.h \
-    corpora_parsing/optimizedword.h
+    corpora_parsing/optimizedword.h \
+    corpora_parsing/featuremapper.h
 
 unix {
     target.path = /usr/lib

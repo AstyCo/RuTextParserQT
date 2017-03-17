@@ -14,7 +14,7 @@ class SYNTAGRUS_PARSERSHARED_EXPORT TreeParser
 public:
     TreeParser();
 
-    void parseTree(const OptimizedTreeCorpora &treeCorpora);
+//    void parseTree(const OptimizedTreeCorpora &treeCorpora);
     void parseTree(const TreeCorpora &treeCorpora);
 
 
@@ -25,10 +25,10 @@ public:
     void deserializeGrammar();
 
 private:
-    void parseSentence(const OptimizedSentence &sentence);
-    void parseByDom(const OptimizedSentence &sentence,
-                    const Nonterminal &leftNonterminal,
-                    const WordIndex &dom);
+//    void parseSentence(const OptimizedSentence &sentence);
+//    void parseByDom(const OptimizedSentence &sentence,
+//                    const Nonterminal &leftNonterminal,
+//                    const WordIndex &dom);
     void parseSentence(const SentenceInCorpora &sentence);
     void parseNode(const Nonterminal &leftNonterminal, const RecordNode *node);
     void produceTerminalRule(const Nonterminal &leftNonterminal, const RecordNode *node);

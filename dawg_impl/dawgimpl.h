@@ -13,17 +13,31 @@ class AstyDAWG
 public:
     AstyDAWG();
 
-    void append(const QList<TValue> &record)
+//    void append(const QList<TValue> &record)
+//    {
+//        Node *p_node = &_root;
+
+//        for (int i=0; i < arraySize; ++i) {
+
+//            if (!p_node->childs.contains(array[i])) {
+//                p_node->insert(array + i, arraySize - i);
+////                p_node->childs.insert(array[i], makeNodes(array, arraySize, i, p_node));
+//            }
+
+//        }
+//    }
+
+    QList<Node*> commonPrefix(const QList<TValue> &word)
     {
-        Node *p_node = &_root;
+        QList<Node*> result;
+        result.append(&_root);
 
-        for (int i=0; i < arraySize; ++i) {
+        QList<TValue>::const_iterator i(word.constBegin());
 
-            if (!p_node->childs.contains(array[i])) {
-                p_node->insert(array + i, arraySize - i);
-//                p_node->childs.insert(array[i], makeNodes(array, arraySize, i, p_node));
-            }
+        while(i != word.constEnd()) {
+            if ((*i).childs.contains())
 
+            ++i;
         }
     }
 

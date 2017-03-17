@@ -32,6 +32,8 @@ void MainWindow::installStatusBar()
     statusBar()->showMessage("status bar");
 }
 
+#include <QTabWidget>
+
 void MainWindow::installMdiArea()
 {
     ui->mdiArea->setTabShape(QTabWidget::Triangular);
@@ -89,6 +91,19 @@ void MainWindow::installMdiArea()
 
     ui->mdiArea->addSubWindow(output);
     ui->mdiArea->addSubWindow(chartView);
+
+    QTabWidget *tabWidget = new QTabWidget(this);
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    tabWidget->addTab(new QWidget(tabWidget), "1");
+    ui->mdiArea->addSubWindow(tabWidget);
 
     ui->mdiArea->tileSubWindows();
 

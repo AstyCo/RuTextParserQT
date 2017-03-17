@@ -1,18 +1,17 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2017-03-03T11:41:03
+# Project created by QtCreator 2017-03-16T23:50:45
 #
 #-------------------------------------------------
 
-QT       += testlib xml network
+QT       += network
 
 QT       -= gui
 
-TARGET = tst_syntagrusparsertest
-CONFIG   += console
-CONFIG   -= app_bundle
+TARGET = morph_client
+TEMPLATE = lib
 
-TEMPLATE = app
+DEFINES += MORPH_CLIENT_LIBRARY
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -27,17 +26,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 include(../link_projects_include.pri)
 include(../rutextparser_extensions_include.pri)
-include(../syntagrus_parser_include.pri)
-include(../cyk_syntactical_analyzer_include.pri)
-include(../dawg_impl_include.pri)
-include(../morph_client_include.pri)
 
+SOURCES += morphclient.cpp
 
+HEADERS += morphclient.h\
+        morph_client_global.h
 
-
-SOURCES += \
-    tst_all.cpp
-DEFINES += SRCDIR=\\\"$$PWD/\\\"
-
-HEADERS += \
-    tst_all.h
+unix {
+    target.path = /usr/lib
+    INSTALLS += target
+}
