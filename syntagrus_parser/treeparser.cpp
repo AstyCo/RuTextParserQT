@@ -1,8 +1,10 @@
 #include "treeparser.h"
+#include "grammar/rulerecord.h"
 
 #include "rutextparser_extensions.h"
 
 TreeParser::TreeParser()
+    : _grammar(NULL)
 {
     static QString dumpFilenameGrammar("dumps/cnfgrammar.dump");
 
@@ -28,127 +30,83 @@ TreeParser::TreeParser()
 
 void TreeParser::parseTree(const TreeCorpora &treeCorpora)
 {
+    if (_grammar)
+        _grammar->clear();
+    else
+        _grammar = new CNFGrammar(treeCorpora.featureMapper().size());
+
+
     foreach(const SentenceInCorpora &sentence, treeCorpora.sentencesBySize())
-        parseSentence(sentence);
+        parseSentence(sentence,
+                      treeCorpora.featureMapper(),
+                      treeCorpora.linkMapper());
 }
 
 CNFGrammar *TreeParser::getGrammar()
 {
-    return &_grammar;
+    return _grammar;
 }
 
 const CNFGrammar *TreeParser::getGrammar() const
 {
-    return &_grammar;
+    return _grammar;
 }
 
 #include <QDebug>
 
 void TreeParser::serializeGrammar() const
 {
-    ExtensionsSerialization::dumpToFile(_dumpFilenameGrammar, _grammar);
+    if (!_grammar) {
+        printWarning("TreeParser::serializeGrammar: _grammar is null");
+        return;
+    }
+    ExtensionsSerialization::dumpToFile(_dumpFilenameGrammar, *_grammar);
 
     qDebug() << "Grammar serialized";
 }
 
 void TreeParser::deserializeGrammar()
 {
-    _grammar.clear();
+    if (_grammar)
+        _grammar->clear();
+    else
+        _grammar = new CNFGrammar();
 
-    ExtensionsSerialization::loadFromDump(_dumpFilenameGrammar, _grammar);
+    ExtensionsSerialization::loadFromDump(_dumpFilenameGrammar, *_grammar);
 }
 
-void TreeParser::parseSentence(const SentenceInCorpora &sentence)
+void TreeParser::parseSentence(const SentenceInCorpora &sentence,
+                               const UniqueVector<featureID, QString> &fmapper,
+                               const UniqueVector<linkID, QString> &lmapper)
 {
-    parseNode(_ROOT, sentence.root());
+    parseNode(sentence.root(), fmapper, lmapper);
 }
 
-void TreeParser::parseNode(const Nonterminal &leftNonterminal, const RecordNode *node)
+void TreeParser::parseNode(const RecordNode *node,
+                           const UniqueVector<featureID, QString> &fmapper,
+                           const UniqueVector<linkID, QString> &lmapper)
 {
-    const QList<RecordNode *> &childNodes = node->childNodes();
+    if (!node) {
+        printWarning("TreeParser::parseNode: null node");
+        return;
+    }
 
-    if (childNodes.isEmpty()) {
-        produceTerminalRule(leftNonterminal, node);
+    featureID fid = fmapper.index(node->record()._feat);
+    if (node->record()._dom == -1) {
+        // root rule
+        _grammar->addRoot(fid);
     }
     else {
-        QList<RecordNode *> leftRules;
-        QList<RecordNode *> rightRules;
+        RuleRecord rule(fid);
 
-        // separate by order: going before or after?
-        foreach (RecordNode *rnode, childNodes) {
-            if (rnode->record().before(node->record()))
-                leftRules.append(rnode);
-            else
-                rightRules.append(rnode);
+        foreach (const RecordNode *child, node->childNodes()) {
+            linkID lid = lmapper.index(child->record()._link);
+            featureID childFid = fmapper.index(child->record()._feat);
+            rule.append(lid, childFid, node->record().before(child->record()));
         }
 
-        if (leftRules.isEmpty()) {
-            if (rightRules.isEmpty()) {
-                Q_ASSERT(false);
-                return;
-            }
-            produceDotNonterminalRule(leftNonterminal, node, rightRules);
-        }
-        else {
-            if (rightRules.isEmpty()) {
-                produceDotNonterminalRule(leftNonterminal, node, leftRules, false);
-            }
-            else {
-                Nonterminal newFirst = generateUniqueNonterminalName();
-                Nonterminal newSecond = generateUniqueNonterminalName();
-
-                _grammar.append(new RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
-
-                produceNonterminalRules(newFirst, leftRules);
-                produceDotNonterminalRule(newSecond, node, rightRules);
-            }
-        }
     }
 }
 
-void TreeParser::produceTerminalRule(const Nonterminal &leftNonterminal, const RecordNode *node)
-{
-    _grammar.append(new RuleCNFGrammar(leftNonterminal, node->record()._feat));
-}
-
-void TreeParser::produceNonterminalRules(Nonterminal leftNonterminal, QList<RecordNode *> &nodes)
-{
-    Q_ASSERT(!nodes.isEmpty());
-
-    for (int i = 0; i < nodes.size() - 1; ++i) {
-        Nonterminal newFirst = generateUniqueNonterminalName();
-        Nonterminal newSecond = generateUniqueNonterminalName();
-
-        _grammar.append(new RuleCNFGrammar(leftNonterminal, newFirst, newSecond));
-        parseNode(newFirst, nodes[i]);
-
-        leftNonterminal = newSecond;
-    }
-
-    parseNode(leftNonterminal, nodes.last());
-}
-
-void TreeParser::produceDotNonterminalRule(const Nonterminal &leftNonterminal,
-                                           const RecordNode *node,
-                                           QList<RecordNode *> &nodes, bool dotThenRule)
-{
-    Nonterminal newDotRule = generateUniqueNonterminalName();
-    Nonterminal newDotRuleSecond = generateUniqueNonterminalName();
-
-    if(dotThenRule)
-        _grammar.append(new RuleCNFGrammar(leftNonterminal, newDotRule, newDotRuleSecond));
-    else
-        _grammar.append(new RuleCNFGrammar(leftNonterminal, newDotRuleSecond, newDotRule));
-
-    produceTerminalRule(newDotRule, node);
-    produceNonterminalRules(newDotRuleSecond, nodes);
-}
 
 #include <QDebug>
-
-Nonterminal TreeParser::generateUniqueNonterminalName() const
-{
-    static Nonterminal n = FIRST_EMPTY_NONTERMINAL;
-
-    return n++;
-}

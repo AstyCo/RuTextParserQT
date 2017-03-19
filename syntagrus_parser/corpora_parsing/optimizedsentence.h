@@ -7,7 +7,7 @@
 
 #include <QVector>
 
-class FeatureMapper;
+class IntMapper;
 
 class SYNTAGRUS_PARSERSHARED_EXPORT OptimizedSentence
 {
@@ -16,7 +16,7 @@ class SYNTAGRUS_PARSERSHARED_EXPORT OptimizedSentence
 public:
     OptimizedSentence();
     OptimizedSentence(const SentenceInCorpora &sentence,
-                      const FeatureMapper &mapper);
+                      const UniqueVector<featureID, QString> &mapper);
 
     QVector<OptimizedWord> &words() { return _words;}
     const QVector<OptimizedWord> &words() const { return _words;}
@@ -32,7 +32,7 @@ public:
     friend QDataStream &operator>>(QDataStream &ds, OptimizedSentence &s);
     /// static
     static OptimizedSentence fromSentence(const SentenceInCorpora &sentence,
-                                          const QHash<QString, FeatureId> &hashFeatures);
+                                          const QHash<QString, featureID> &hashFeatures);
 };
 
 QDataStream &operator<<(QDataStream &ds, const OptimizedSentence &s);

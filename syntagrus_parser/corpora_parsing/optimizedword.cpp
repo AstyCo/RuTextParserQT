@@ -1,5 +1,5 @@
 #include "optimizedword.h"
-#include "featuremapper.h"
+#include "uniquevector.h"
 
 #include <QHash>
 
@@ -31,13 +31,13 @@ QDataStream &operator>>(QDataStream &ds, OptimizedWord &w)
 }
 
 OptimizedWord OptimizedWord::fromWord(const WordInCorpora &word,
-                                      const FeatureMapper &mapper)
+                                      const UniqueVector<featureID, QString> &mapper)
 {
     OptimizedWord res;
     res.dom = word.dom();
     res.id = word.index();
-    Q_ASSERT(mapper.featureId(word.feature()) != -1);
-    res.feature = mapper.featureId(word.feature());
+    Q_ASSERT(mapper.index(word.feature()) != -1);
+    res.feature = mapper.index(word.feature());
 
     res.sintRels.append(word.links());
     res.words.append(word.word());
@@ -45,7 +45,7 @@ OptimizedWord OptimizedWord::fromWord(const WordInCorpora &word,
     return res;
 }
 
-const FeatureId &OptimizedWord::getFeature() const
+const featureID &OptimizedWord::getFeature() const
 {
     return feature;
 }

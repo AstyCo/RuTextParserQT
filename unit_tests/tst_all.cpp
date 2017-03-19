@@ -298,8 +298,9 @@ void SynTagRusParserTest::treeCorporaSerializationTest()
               "TreeCorpora of different size after serialization/deserialization");
 }
 
-void SynTagRusParserTest::grammarSerializationTest()
+void SynTagRusParserTest::grammarTest()
 {
+    _syntagrusParser.deserializeTreeCorpora();
     _grammarParser.parseTree(*_syntagrusParser.getTreeCorpora());
 
     int sz = _grammarParser.getGrammar()->size();
@@ -360,7 +361,7 @@ void SynTagRusParserTest::wholeTest()
 {
     parsingTest();
     treeCorporaSerializationTest();
-    grammarSerializationTest();
+    grammarTest();
 
     qDebug() << "Size of TreeCorpora after deserialization" << _syntagrusParser.getTreeCorpora()->size();
     qDebug() << "Grammar size after serialization" << _grammarParser.getGrammar()->size();

@@ -21,8 +21,8 @@ public:
                     const QString &lemma, const QString &link,
                     const QString &word, QString nodeType = QString());
 
-    inline bool before(const RecordInCorpora &anotherRecord);
-    inline bool after(const RecordInCorpora &anotherRecord);
+    inline bool before(const RecordInCorpora &anotherRecord) const;
+    inline bool after(const RecordInCorpora &anotherRecord) const;
 
     friend QDataStream &operator<<(QDataStream &ds, const RecordInCorpora &r);
     friend QDataStream &operator>>(QDataStream &ds, RecordInCorpora &r);
@@ -33,11 +33,11 @@ QDataStream &operator>>(QDataStream &ds, RecordInCorpora &r);
 
 /// INLINE FUNCTIONS
 
-inline bool RecordInCorpora::before(const RecordInCorpora &anotherRecord) {
+inline bool RecordInCorpora::before(const RecordInCorpora &anotherRecord) const {
     return _id < anotherRecord._id;
 }
 
-inline bool RecordInCorpora::after(const RecordInCorpora &anotherRecord) {
+inline bool RecordInCorpora::after(const RecordInCorpora &anotherRecord) const {
     return _id > anotherRecord._id;
 }
 

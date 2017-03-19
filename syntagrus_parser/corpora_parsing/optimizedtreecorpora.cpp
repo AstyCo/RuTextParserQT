@@ -7,14 +7,9 @@ OptimizedTreeCorpora::OptimizedTreeCorpora()
 }
 
 OptimizedTreeCorpora::OptimizedTreeCorpora(const TreeCorpora &tree)
+    : _featureMapper(tree.featureMapper())
 {
     initDumpFilename();
-
-
-    const QList<QString> &treeFeatures = tree.features();
-
-    for (int i=0; i < treeFeatures.size(); ++i)
-        _featureMapper.addFeature(treeFeatures.at(i));
 
     QMultiHash<int, SentenceInCorpora>::const_iterator it(tree.sentencesBySize().constBegin());
     while( it != tree.sentencesBySize().constEnd()) {

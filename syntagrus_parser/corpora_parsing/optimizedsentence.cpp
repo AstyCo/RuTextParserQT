@@ -1,5 +1,5 @@
 #include "optimizedsentence.h"
-#include "featuremapper.h"
+#include "uniquevector.h"
 #include "rutextparser_extensions.h"
 
 OptimizedSentence::OptimizedSentence()
@@ -8,7 +8,7 @@ OptimizedSentence::OptimizedSentence()
 }
 
 OptimizedSentence::OptimizedSentence(const SentenceInCorpora &sentence,
-                                     const FeatureMapper &mapper)
+                                     const UniqueVector<featureID, QString> &mapper)
 {
     const QVector<WordInCorpora> &words = sentence.qDebugSentence().vector();
 
@@ -29,7 +29,7 @@ void OptimizedSentence::append(const SentenceInCorpora &s)
 }
 
 OptimizedSentence fromSentence(const SentenceInCorpora &sentence,
-                               const FeatureMapper &mapper)
+                               const UniqueVector<featureID, QString> &mapper)
 {
     OptimizedSentence res;
     res.words().clear();
@@ -58,7 +58,7 @@ char *OptimizedSentence::toKey() const
     char *key = new char[length + 1];
     key[length] = '\0';
     for (int j=0; j < _words.size(); ++j) {
-        const FeatureId &fid = _words[j].getFeature();
+        const featureID &fid = _words[j].getFeature();
         static const int blockSize = 0x40;
 
         key[2*j] = fid / blockSize + 0x80;

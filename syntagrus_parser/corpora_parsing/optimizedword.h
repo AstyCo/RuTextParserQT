@@ -2,18 +2,18 @@
 #define OPTIMIZEDWORD_H
 
 #include "wordincorpora.h"
+#include "corpora_parsing/uniquevector.h"
+#include "internal/base-types.h"
 
 #include <QDebug>
 
-typedef qint16 FeatureId;
-
-class FeatureMapper;
+class IntMapper;
 
 struct SYNTAGRUS_PARSERSHARED_EXPORT OptimizedWord
 {
     WordIndex dom;
     WordIndex id;
-    FeatureId feature;
+    featureID feature;
     QList<SintRelList> sintRels;
     QList<QString> words;
 
@@ -25,11 +25,11 @@ public:
     bool operator==(const OptimizedWord&w) const;
     int size() const { Q_ASSERT(sintRels.size() == words.size()); return words.size();}
 
-    const FeatureId &getFeature() const;
+    const featureID &getFeature() const;
 
     /// static
     static OptimizedWord fromWord(const WordInCorpora &word,
-                                  const FeatureMapper &mapper);
+                                  const UniqueVector<featureID, QString> &mapper);
 
     friend QDebug operator<<(QDebug d, const OptimizedWord &w);
 };

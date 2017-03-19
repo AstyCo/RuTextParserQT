@@ -7,38 +7,18 @@
 
 #include <QDebug>
 
-QDebug operator<< (QDebug d, const RuleCNFGrammar &r) {
-    if (r._type == RuleCNFGrammar::TerminalRule) {
-        d << r._leftNonterminal
-          << "->"
-          << r._terminal;
-    }
-    else {
-        d << r._leftNonterminal
-          << "->"
-          << r._firstNonterminal
-          << ' '
-          << r._secondNonterminal;
-    }
 
-    return d;
+CNFGrammar::CNFGrammar()
+{
+    initDumpFilename();
 }
-
 
 CNFGrammar::CNFGrammar(const featureID &featureCount)
 {
-    static QString dumpFilename("dumps/cnfgrammar.dump");
+    initDumpFilename();
 
-#ifdef RUTEXTPARSERQT_DIR
-    _dumpFilename = RUTEXTPARSERQT_DIR + dumpFilename;
-#else
-    qWarning("RUTEXTPARSERQT_DIR not defined");
-
-    QString manualPath = "../../RuTextParserQT/";
-    _dumpFilename = manualPath + dumpFilename;
-#endif
-
-    // init vector
+    // init vectors
+    _rootScore.resize(featureCount);
     _rulesByFeatureID.resize(featureCount);
     // init matrix
     _rulesByRightIDsHash.resize(featureCount);
@@ -63,6 +43,13 @@ void CNFGrammar::append(const RuleRecord &rule)
     insert(rule.sourceRule(), ruleIDs);
 }
 
+void CNFGrammar::addRoot(const featureID &fid)
+{
+    _rootScore[fid].increaseScore();
+}
+
+
+
 void CNFGrammar::clear()
 {
     clearCache();
@@ -86,79 +73,18 @@ void CNFGrammar::loadFromDump()
     ExtensionsSerialization::loadFromDump(_dumpFilename, *this);
 }
 
-NonterminalList CNFGrammar::getNonterminals(const Terminal &terminal) const
+void CNFGrammar::initDumpFilename()
 {
-    NonterminalList nonterminals;
-    QMultiHash<Terminal, const RuleCNFGrammar *>::const_iterator
-            i(_mappingTerminalToRules.constFind(terminal));
+    static QString dumpFilename("dumps/cnfgrammar.dump");
 
-//    qDebug() << QString("looking for rule[X -> %1]").arg(terminal);
-    while (i != _mappingTerminalToRules.constEnd() && i.key() == terminal) {
-//        qDebug() << "terminal key" << i.key();
-//        qDebug() << "terminal value" << *i.value();
-        nonterminals.append(i.value()->_leftNonterminal);
-        ++i;
-    }
+#ifdef RUTEXTPARSERQT_DIR
+    _dumpFilename = RUTEXTPARSERQT_DIR + dumpFilename;
+#else
+    qWarning("RUTEXTPARSERQT_DIR not defined");
 
-    return nonterminals;
-}
-
-NonterminalList CNFGrammar::getNonterminals(const Nonterminal &first, const Nonterminal &second) const
-{
-//    qDebug() << QString("looking for rule[X -> %1 %2]")
-//                .arg(QString::number(first))
-//                .arg(QString::number(second));
-
-    NonterminalList nonterminals;
-    NonterminalPair key = concatTerminals(first, second);
-    QMultiHash<NonterminalPair, const RuleCNFGrammar *>::const_iterator i(_mappingRightToRules.find(key));
-
-    while (i != _mappingRightToRules.constEnd() && i.key() == key) {
-        nonterminals.append(i.value()->_leftNonterminal);
-        ++i;
-    }
-
-    return nonterminals;
-}
-
-NonterminalList CNFGrammar::getNonterminals(const NonterminalList &firsts, const NonterminalList &seconds) const
-{
-    NonterminalList res;
-    qDebug() << QString("getNonterminals fsz[%1] ssz[%2]")
-                .arg(QString::number(firsts.size()))
-                .arg(QString::number(seconds.size()));
-//    qDebug() << "firsts" << firsts;
-//    qDebug() << "seconds" << seconds;
-
-
-    foreach (const Nonterminal &f, firsts)
-        foreach (const Nonterminal &s, seconds) {
-            res.append(getNonterminals(f, s));
-        }
-
-//    qDebug() << "res sz" << res.size();
-    return res;
-}
-
-QStringList CNFGrammar::toSentence(const QVector<NonterminalList> &row) const
-{
-    QStringList res;
-    foreach (const NonterminalList &nlist, row ){
-//        qDebug() << "tosent";
-
-        QMultiHash<Nonterminal, const RuleCNFGrammar *>::const_iterator i = _mappingLeftToRules.constFind(nlist.first());
-        Q_ASSERT(i != _mappingLeftToRules.constEnd() && i.key() == nlist.first());
-        QString feat = i.value()->_terminal;
-
-        Q_ASSERT(!feat.isEmpty());
-        res.append(feat);
-    }
-    return res;
-}
-
-NonterminalPair CNFGrammar::concatTerminals(const Nonterminal &first, const Nonterminal &second)
-{
-    return qMakePair(first, second);
+    QString manualPath = "../../RuTextParserQT/";
+    _dumpFilename = manualPath + dumpFilename;
+#endif
 }
 
 void CNFGrammar::clearCache()
@@ -166,9 +92,12 @@ void CNFGrammar::clearCache()
     _rulesByRightIDsHash.clear();
 }
 
-void CNFGrammar::fillCache(RuleCNFGrammar *p_rule)
+void CNFGrammar::fillCache(const int &newID)
 {
+    const ChomskyRuleRecord &rule = _ruleByID[newID].rule;
 
+    _rulesByRightIDsHash[rule.leftID()][rule.rightID()].append(
+                ScoredRuleID(newID));
 }
 
 ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
@@ -179,11 +108,10 @@ ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
         return foundID;
     }
 
-    ruleID newID = _ruleByID.size();
     // insert new rule
     _ruleByID.append(ScoredChomskyRuleRecord(rule));
     // fill cache
-    _rulesByRightIDsHash[rule.leftID()][rule.rightID()].append(ScoredRuleID(newID));
+    fillCache(_ruleByID.size() - 1);
 }
 
 ruleID CNFGrammar::find(const ChomskyRuleRecord &rule) const
@@ -206,7 +134,6 @@ void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
     }
     else {
         // insert new rule
-        int newIndex = _rulesByFeatureID[srcRuleID].size();
         _rulesByFeatureID[srcRuleID].append(ScoredListRuleID(ids));
     }
 }
@@ -215,7 +142,7 @@ int CNFGrammar::find(const featureID &srcRuleID, const ListRuleID &ids) const
 {
     const ListScoredListRuleID &ruleList = _rulesByFeatureID[srcRuleID];
     for (int i=0; i < ruleList.size(); ++i) {
-        if (ruleList[i] == ids)
+        if (ruleList[i].list == ids)
             return i;
     }
     // not found
@@ -224,9 +151,9 @@ int CNFGrammar::find(const featureID &srcRuleID, const ListRuleID &ids) const
 
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr)
 {
-    ds << gr._ruleByID.size();
-    for (int i = 0; i < gr._ruleByID.size(); ++i)
-        ds << *gr._ruleByID[i];
+    ds << gr._dumpFilename;
+    ds << gr._ruleByID;
+    ds << gr._rulesByFeatureID;
 
     return ds;
 }
@@ -238,18 +165,12 @@ QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
         return ds;
     }
 
-    int rulesSize;
-    ds >> rulesSize;
-    Q_ASSERT(rulesSize >= 0);
+    ds >> gr._dumpFilename;
+    ds >> gr._ruleByID;
+    ds >> gr._rulesByFeatureID;
 
-    gr._ruleByID.resize(rulesSize);
-    for (int i = 0; i < rulesSize; ++i){
-        gr._ruleByID[i] = new RuleCNFGrammar();
-        ds >> *gr._ruleByID[i];
-    }
-    for (int i = 0; i < gr._ruleByID.size(); ++i) {
-        gr.fillCache(gr._ruleByID[i]); // fills mapping
-    }
+    for (int i=0; i < gr._ruleByID.size(); ++i)
+        gr.fillCache(i);
 
     return ds;
 }
