@@ -1,5 +1,6 @@
 #include "optimizedsentence.h"
 #include "featuremapper.h"
+#include "rutextparser_extensions.h"
 
 OptimizedSentence::OptimizedSentence()
 {
@@ -64,6 +65,20 @@ char *OptimizedSentence::toKey() const
         key[2*j + 1] = fid % blockSize + 1;
     }
     return key;
+}
+
+QStringList OptimizedSentence::getSentence(const int &index) const
+{
+    QStringList result;
+    if (index < 0 || index >= size()) {
+        printWarning("OptimizedSentence::getSentence: out of index");
+        return result;
+    }
+
+    for (int i=0; i < _words.size(); ++i) {
+        result.append(_words.at(i).words.at(index));
+    }
+    return result;
 }
 
 QDataStream &operator<<(QDataStream &ds, const OptimizedSentence &s)

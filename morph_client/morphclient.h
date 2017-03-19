@@ -5,16 +5,29 @@
 
 #include <QTcpSocket>
 
-class MORPH_CLIENTSHARED_EXPORT MorphClient
+typedef QList<QPair<QString, qreal> > MorphResultType;
+
+class MORPH_CLIENTSHARED_EXPORT MorphClient : public QObject
 {
-    QTcpSocket _socket;
 public:
     MorphClient();
 
     void connectToHost(const QString &serverName, const int &port);
 
-    QList<QStringList> analyze(const QStringList &sentence);
-    QStringList analyzeWord(const QString &word);
+    QList<MorphResultType> analyze(const QStringList &sentence);
+    MorphResultType analyzeWord(const QString &word);
+
+    QAbstractSocket::SocketState state() const { return _socket.state();}
+
+private:
+    MorphResultType getAnswer();
+    void displayError(QAbstractSocket::SocketError socketError);
+    void readAnalyzed();
+
+private:
+    QTcpSocket _socket;
+    QList<QStringList> _analyzedWords;
+    int _blockSize;
 };
 
 #endif // MORPHCLIENT_H

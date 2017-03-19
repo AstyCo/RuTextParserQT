@@ -33,7 +33,6 @@ SOURCES += \
     corpora_parsing/recordnode.cpp \
     corpora_parsing/sentenceincorpora.cpp \
     grammar/cnfgrammar.cpp \
-    grammar/rulecnfgrammar.cpp \
     corpora_parsing/syntagrusparser.cpp \
     corpora_parsing/wordincorpora.cpp \
     corpora_parsing/sentenceinfo.cpp \
@@ -51,14 +50,17 @@ HEADERS +=\
     corpora_parsing/sentenceincorpora.h \
     corpora_parsing/treecorpora.h \
     grammar/cnfgrammar.h \
-    grammar/rulecnfgrammar.h \
     corpora_parsing/syntagrusparser.h \
     corpora_parsing/wordincorpora.h \
     corpora_parsing/sentenceinfo.h \
     corpora_parsing/optimizedtreecorpora.h \
     corpora_parsing/optimizedsentence.h \
     corpora_parsing/optimizedword.h \
-    corpora_parsing/featuremapper.h
+    corpora_parsing/featuremapper.h \
+    internal/base-types.h \
+    grammar/chomskyrulerecord.h \
+    grammar/rulerecord.h \
+    grammar/scoredrules.h
 
 unix {
     target.path = /usr/lib

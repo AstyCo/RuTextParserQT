@@ -22,9 +22,10 @@ public:
     const QVector<OptimizedWord> &words() const { return _words;}
     void append(const SentenceInCorpora &s);
     bool operator==(const OptimizedSentence &os);
-
+    int size() const { return (_words.isEmpty() ? 0 : _words.first().size());}
     char *toKey() const;
 
+    QStringList getSentence(const int &index) const;
 
 
     friend QDataStream &operator<<(QDataStream &ds, const OptimizedSentence &s);

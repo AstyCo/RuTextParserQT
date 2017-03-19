@@ -8,6 +8,7 @@
 #include "corpora_parsing/optimizedtreecorpora.h"
 #include "treeparser.h"
 #include "cyksyntacticalanalyzer.h"
+#include "morphclient.h"
 
 class SynTagRusParserTest : public QObject
 {
@@ -15,8 +16,30 @@ class SynTagRusParserTest : public QObject
 
     SynTagRusParser _syntagrusParser;
     TreeParser _grammarParser;
+    MorphClient _client;
+    OptimizedTreeCorpora _optimized;
+
+    QFile logFile;
+    QFile extraLogFile;
+    QTextStream logStream;
+    QTextStream extraLogStream;
 public:
-    SynTagRusParserTest() { }
+    SynTagRusParserTest() : logFile( "logs_test.n++") , extraLogFile( "logs_info_test.n++"){
+        if (!logFile.open(QIODevice::WriteOnly))
+            Q_ASSERT(false);
+
+        if (!extraLogFile.open(QIODevice::WriteOnly))
+            Q_ASSERT(false);
+
+        logStream.setDevice(&logFile);
+        extraLogStream.setDevice(&extraLogFile);
+
+        _client.connectToHost(QHostAddress(QHostAddress::LocalHost).toString(), 14147);
+    }
+
+private:
+    bool morphClientTestSentence(const OptimizedSentence &sentence, const int &inn);
+    bool morphClientTestWord(const OptimizedWord &word, const int &inn);
 
 private:
     void treeCorporaSerializationTest();
@@ -31,6 +54,8 @@ private:
     void parsingTest();
     void dawgTest();
     void dawgLoadTest();
+
+    void simpleTestMorphClient();
 private Q_SLOTS:
     void testMorphClient();
 };

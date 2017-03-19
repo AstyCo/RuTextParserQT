@@ -6,16 +6,27 @@
 #include <QFile>
 #include <QDataStream>
 
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString );
 RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString,
-                                                           const QString &arg1 = QString(),
-                                                           const QString &arg2 = QString(),
-                                                           const QString &arg3 = QString()
-                                                           );
+                                                           const QString &arg1 );
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString,
+                                                           const QString &arg1,
+                                                           const QString &arg2 );
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString,
+                                                           const QString &arg1,
+                                                           const QString &arg2,
+                                                           const QString &arg3 );
+
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateString);
 RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateString,
-                                                           const QString &arg1 = QString(),
-                                                           const QString &arg2 = QString(),
-                                                           const QString &arg3 = QString()
-                                                           );
+                                                       const QString &arg1 );
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateString,
+                                                       const QString &arg1,
+                                                       const QString &arg2 );
+RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateString,
+                                                       const QString &arg1,
+                                                       const QString &arg2,
+                                                       const QString &arg3 );
 
 
 namespace ExtensionsSerialization {

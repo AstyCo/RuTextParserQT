@@ -25,9 +25,25 @@ QDebug operator<< (QDebug d, const RuleCNFGrammar &r) {
 }
 
 
-CNFGrammar::CNFGrammar()
-    : _dumpFilename("CNFGrammar.dump")
+CNFGrammar::CNFGrammar(const featureID &featureCount)
 {
+    static QString dumpFilename("dumps/cnfgrammar.dump");
+
+#ifdef RUTEXTPARSERQT_DIR
+    _dumpFilename = RUTEXTPARSERQT_DIR + dumpFilename;
+#else
+    qWarning("RUTEXTPARSERQT_DIR not defined");
+
+    QString manualPath = "../../RuTextParserQT/";
+    _dumpFilename = manualPath + dumpFilename;
+#endif
+
+    // init vector
+    _rulesByFeatureID.resize(featureCount);
+    // init matrix
+    _rulesByRightIDsHash.resize(featureCount);
+    for (int i=0; i < featureCount; ++i)
+        _rulesByRightIDsHash[i].resize(featureCount);
 }
 
 CNFGrammar::~CNFGrammar()
@@ -35,23 +51,24 @@ CNFGrammar::~CNFGrammar()
     clear();
 }
 
-void CNFGrammar::append(RuleCNFGrammar *rule)
+void CNFGrammar::append(const RuleRecord &rule)
 {
-    _rules.append(rule);
+    QList<ruleID> ruleIDs;
+    foreach (const RuleDepend &depend, rule.depends()) {
+        ruleIDs.append( insert(
+                    ChomskyRuleRecord(depend.link, depend.terminal,
+                                      rule.sourceRule(), depend.isRight)));
+    }
 
-//    qDebug() << "added"<< *rule << endl;
-
-    fillCache(rule);
+    insert(rule.sourceRule(), ruleIDs);
 }
 
 void CNFGrammar::clear()
 {
     clearCache();
 
-    foreach (RuleCNFGrammar* rule, _rules)
-        delete rule;
-
-    _rules.clear();
+    _ruleByID.clear();
+    _rulesByFeatureID.clear();
 }
 
 void CNFGrammar::setDumpFilename(const QString &path)
@@ -146,42 +163,77 @@ NonterminalPair CNFGrammar::concatTerminals(const Nonterminal &first, const Nont
 
 void CNFGrammar::clearCache()
 {
-    _mappingLeftToRules.clear();
-
-    _mappingFirstToRules.clear();
-    _mappingSecondToRules.clear();
-    _mappingRightToRules.clear();
-
-    _mappingTerminalToRules.clear();;
+    _rulesByRightIDsHash.clear();
 }
 
 void CNFGrammar::fillCache(RuleCNFGrammar *p_rule)
 {
-    _mappingLeftToRules.insert(p_rule->_leftNonterminal, p_rule);
-    if (p_rule->isNonterminalRule()) {
-        _mappingFirstToRules.insert(p_rule->_firstNonterminal, p_rule);
-        _mappingSecondToRules.insert(p_rule->_secondNonterminal, p_rule);
-        _mappingRightToRules.insert(
-                    concatTerminals(p_rule->_firstNonterminal, p_rule->_secondNonterminal),
-                    p_rule);
+
+}
+
+ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
+{
+    ruleID foundID = find(rule);
+    if (foundID != -1) {
+        _ruleByID[foundID].increaseScore();
+        return foundID;
+    }
+
+    ruleID newID = _ruleByID.size();
+    // insert new rule
+    _ruleByID.append(ScoredChomskyRuleRecord(rule));
+    // fill cache
+    _rulesByRightIDsHash[rule.leftID()][rule.rightID()].append(ScoredRuleID(newID));
+}
+
+ruleID CNFGrammar::find(const ChomskyRuleRecord &rule) const
+{
+    const ListScoredRuleID &rules = _rulesByRightIDsHash[rule.leftID()][rule.rightID()];
+
+    foreach (const ScoredRuleID &id, rules) {
+        if (_ruleByID[id.id].rule.sourceRule == rule.sourceRule)
+            return id.id;
+    }
+    // not found
+    return -1;
+}
+
+void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
+{
+    int innerIndex = find(srcRuleID, ids);
+    if (innerIndex != -1) {
+        _rulesByFeatureID[srcRuleID][innerIndex].increaseScore();
     }
     else {
-        _mappingTerminalToRules.insert(p_rule->_terminal, p_rule);
+        // insert new rule
+        int newIndex = _rulesByFeatureID[srcRuleID].size();
+        _rulesByFeatureID[srcRuleID].append(ScoredListRuleID(ids));
     }
+}
+
+int CNFGrammar::find(const featureID &srcRuleID, const ListRuleID &ids) const
+{
+    const ListScoredListRuleID &ruleList = _rulesByFeatureID[srcRuleID];
+    for (int i=0; i < ruleList.size(); ++i) {
+        if (ruleList[i] == ids)
+            return i;
+    }
+    // not found
+    return -1;
 }
 
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr)
 {
-    ds << gr._rules.size();
-    for (int i = 0; i < gr._rules.size(); ++i)
-        ds << *gr._rules[i];
+    ds << gr._ruleByID.size();
+    for (int i = 0; i < gr._ruleByID.size(); ++i)
+        ds << *gr._ruleByID[i];
 
     return ds;
 }
 
 QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
 {
-    if (!gr._rules.isEmpty()) {
+    if (!gr._ruleByID.isEmpty()) {
         qWarning("Trying to deserialize CNFGrammar which is not empty (Tip: call clear() )");
         return ds;
     }
@@ -190,13 +242,13 @@ QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
     ds >> rulesSize;
     Q_ASSERT(rulesSize >= 0);
 
-    gr._rules.resize(rulesSize);
+    gr._ruleByID.resize(rulesSize);
     for (int i = 0; i < rulesSize; ++i){
-        gr._rules[i] = new RuleCNFGrammar();
-        ds >> *gr._rules[i];
+        gr._ruleByID[i] = new RuleCNFGrammar();
+        ds >> *gr._ruleByID[i];
     }
-    for (int i = 0; i < gr._rules.size(); ++i) {
-        gr.fillCache(gr._rules[i]); // fills mapping
+    for (int i = 0; i < gr._ruleByID.size(); ++i) {
+        gr.fillCache(gr._ruleByID[i]); // fills mapping
     }
 
     return ds;

@@ -2,8 +2,9 @@
 #define CNFGRAMMAR_H
 
 #include "syntagrus_parser_global.h"
-
-#include "rulecnfgrammar.h"
+#include "internal/base-types.h"
+#include "rulerecord.h"
+#include "scoredrules.h"
 
 #include <QDataStream>
 #include <QVector>
@@ -13,15 +14,21 @@
 class SYNTAGRUS_PARSERSHARED_EXPORT CNFGrammar
 {
     QString _dumpFilename;
+
+    QVector<ScoredChomskyRuleRecord> _ruleByID; ///< [ruleID]->RuleRecord
+    QVector<ListScoredListRuleID> _rulesByFeatureID;   ///< [featureID]->(ListOf(ListOf(<ruleID | featureID->X Y>), <number of occuriences>))
+
+    // hash
+    QVector<QVector<ListScoredRuleID> > _rulesByRightIDsHash;     ///< [leftFeatureID][rightFeatureID]->ListOf(<ruleID | X->leftFeatureID rightFeatureID>)
 public:
-    CNFGrammar();
+    CNFGrammar(const featureID &featureCount);
     ~CNFGrammar();
 
     /*!
      * \brief Adds rule to grammar
      * \param rule Grammar rule in chomsky normal form
      */
-    void append(RuleCNFGrammar *rule);
+    void append(const RuleRecord &rule);
 
     /*!
      * \brief Clears grammar
@@ -39,10 +46,6 @@ public:
      * Use setDumpFilename(<path>) to set filename
      */
     void dump() const;
-
-    /*!
-     * \brief Loads CNFGrammar from CNFGrammar.dump (name may be different)
-     */
     void loadFromDump();
 
     inline bool isEmpty() const;
@@ -61,15 +64,10 @@ private:
     void fillCache(RuleCNFGrammar *rule);
 
 private:
-    QVector<RuleCNFGrammar*> _rules;
-
-    QMultiHash<Nonterminal, const RuleCNFGrammar *> _mappingLeftToRules;
-
-    QMultiHash<Nonterminal, const RuleCNFGrammar *> _mappingFirstToRules;
-    QMultiHash<Nonterminal, const RuleCNFGrammar *> _mappingSecondToRules;
-    QMultiHash<NonterminalPair, const RuleCNFGrammar *> _mappingRightToRules;
-
-    QMultiHash<Terminal, const RuleCNFGrammar *> _mappingTerminalToRules;
+    ruleID insert(const ChomskyRuleRecord &rule);
+    ruleID find(const ChomskyRuleRecord &rule) const;
+    void insert(const featureID &srcRuleID, const ListRuleID &ids);
+    int find(const featureID &srcRuleID, const ListRuleID &ids) const;
 
     /*!
      * Uses for serialization
@@ -79,11 +77,11 @@ private:
 };
 
 /// INLINE FUNCTIONS
-inline bool CNFGrammar::isEmpty() const { return _rules.isEmpty();}
+inline bool CNFGrammar::isEmpty() const { return _ruleByID.isEmpty();}
 
-inline int CNFGrammar::size() const { return _rules.size();}
+inline int CNFGrammar::size() const { return _ruleByID.size();}
 
-inline const QVector<RuleCNFGrammar*> &CNFGrammar::rules() const { return _rules;}
+inline const QVector<RuleCNFGrammar*> &CNFGrammar::rules() const { return _ruleByID;}
 
 /// SERIALIZATION / DESERIALIZATION
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr);

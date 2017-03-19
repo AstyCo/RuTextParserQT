@@ -4,11 +4,13 @@
 #include "dawgdic/dictionary-builder.h"
 #include "morphclient.h"
 
+
+
 #include <fstream>
 #include <iostream>
-
-
 #include <algorithm>
+
+#include <QStringBuilder>
 
 #define UPPER_MASK 0xFF00
 #define LOWER_MASK 0xFF
@@ -145,11 +147,141 @@ void SynTagRusParserTest::dawgLoadTest()
     }
 }
 
+
+void SynTagRusParserTest::simpleTestMorphClient()
+{
+    qDebug() << "analyzed" << _client.analyzeWord(QString::fromUtf8("Арбуз"));
+
+    QStringList sentence;
+    sentence << QString::fromUtf8("Однако")
+             << QString::fromUtf8("Однако")
+             << QString::fromUtf8("Семён")
+             << QString::fromUtf8("Еремеевич")
+             << QString::fromUtf8("загруженный")
+             << QString::fromUtf8("текучкой")
+             << QString::fromUtf8("не")
+             << QString::fromUtf8("успел")
+             << QString::fromUtf8("сделать")
+             << QString::fromUtf8("это");
+
+    qDebug() << "analyzed2" << _client.analyze(sentence);
+
+//    client.analyzeWord(QString::fromUtf8("дыня"));
+//    client.analyzeWord(QString::fromUtf8("помидорка"));
+//    client.analyzeWord(QString::fromUtf8("есть"));
+
+}
+
 void SynTagRusParserTest::testMorphClient()
 {
-    MorphClient client;
+    _optimized.deserialize();
 
-    client.analyzeWord(QString::fromUtf8("арбуз"));
+    const QMultiHash<int, OptimizedSentence> &sentences = _optimized.multihashSentences();
+
+    QMultiHash<int, OptimizedSentence>::const_iterator it(sentences.constBegin());
+    while (it != sentences.constEnd()) {
+        if (_client.state() != QAbstractSocket::ConnectedState) {
+            qDebug() << "Socket not connected";
+            return;
+        }
+        for (int inn=0; inn < it.value().size(); ++inn) {
+            morphClientTestSentence(it.value(), inn);
+        }
+        it++;
+    }
+
+}
+
+bool SynTagRusParserTest::morphClientTestSentence(const OptimizedSentence &opt, const int &inn)
+{
+    static long failedCount = 0;
+    static long suc = 0;
+    bool failed = false;
+    for (int i=0; i<opt.words().size(); ++i) {
+        const OptimizedWord &word = opt.words().at(i);
+        if (!morphClientTestWord(word, inn)) {
+            failed = true;
+        }
+    }
+    if (failed) {
+        failedCount++;
+        logStream << QString("[%1/%2]: ")
+                     .arg(QString::number(suc))
+                     .arg(QString::number(failedCount))
+                 << "failed sentence\n\t"
+                 << opt.getSentence(inn).join(' ')
+                 << endl;
+    }
+    else {
+        suc++;
+        extraLogStream << QString("[%1/%2]: ")
+                          .arg(QString::number(suc))
+                          .arg(QString::number(failedCount))
+                 << "success sentence\n\t"
+                 << opt.getSentence(inn).join(' ')
+                 << endl;
+    }
+
+    return !failed;
+}
+
+inline QString toString(const MorphResultType &analyzed) {
+    QString result = "MORPH {";
+
+    for (int i=0; i < analyzed.size(); ++i) {
+        result = result
+                % "\n\tQPair(\'"
+                % analyzed.at(i).first
+                % "\', "
+                % QString::number(analyzed.at(i).second)
+                % ')';
+    }
+    result = result % "\n}";
+    return result;
+}
+
+bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const int &inn)
+{
+    static long failedCount = 0;
+    static long successfulCount = 0;
+    bool successful = false;
+
+    QString feature = _optimized.featureMapper().feature(word.feature);
+    MorphResultType analyzed = _client.analyzeWord(word.words[inn]);
+
+    for (int i=0; i < analyzed.size(); ++i) {
+        if (analyzed.at(i).first == feature)
+            // found
+            successful = true;
+    }
+    qint16;
+
+    if (!successful) {
+        ++failedCount;
+//        Q_ASSERT(failedCount < 100);
+        logStream << QString("[%1/%2]:")
+                    .arg(QString::number(successfulCount))
+                    .arg(QString::number(failedCount))
+                 << " failed word\n\t"
+                 << word.words.at(inn) << ' ' << feature
+                 << endl;
+        logStream << toString(analyzed)
+                  << endl;
+    }
+    else {
+        successfulCount++;
+//        Q_ASSERT(successfulCount < 1000);
+        extraLogStream <<  QString("[%1/%2]:")
+                        .arg(QString::number(successfulCount))
+                        .arg(QString::number(failedCount))
+                     << " success word\n\t"
+                     << word.words.at(inn) << ' ' << feature
+                     << endl;
+        extraLogStream << toString(analyzed)
+                  << endl;
+    }
+
+    return successful;
 }
 
 void SynTagRusParserTest::treeCorporaSerializationTest()
