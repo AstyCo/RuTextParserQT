@@ -28,12 +28,15 @@ include(../syntagrus_parser_include.pri)
 
 SOURCES += \
     cyksyntacticalanalyzer.cpp \
-    cykmatrix.cpp
+    cykmatrix.cpp \
+    cykcell.cpp
 
 HEADERS += \
     cyk_syntactical_analyzer_global.h \
     cyksyntacticalanalyzer.h \
-    cykmatrix.h
+    cykmatrix.h \
+    cykcell.h \
+    rulenode.h
 
 unix {
     target.path = /usr/lib

@@ -2,55 +2,39 @@
 
 #include <QDebug>
 
-CYKMatrix::CYKMatrix()
-    : _size(1)
+CYKMatrix::CYKMatrix(int size)
+    : _size(size)
 {
-    _column = new NonterminalList[1];
+    if (size > 0)
+        initMatrix(size);
 }
 
-CYKMatrix::CYKMatrix(uchar size, const CYKMatrix *submatrix)
-    :_size(size), _submatrix(submatrix)
+CYKMatrix::~CYKMatrix()
 {
-    Q_ASSERT(_size == _submatrix->size() + 1);
-
-    _column = new NonterminalList[_size];
-}
-
-NonterminalList &CYKMatrix::at(int i, int j) const
-{
-    Q_ASSERT(i >= 0);
-    Q_ASSERT(j >= 0);
-
-    if (j == 0) {
-        Q_ASSERT(i < _size);
-        return _column[i];
+    if (_matrix) {
+        for (int i=0; i < sz; ++i)
+            delete []_matrix[i];
+        delete [] _matrix;
     }
-    return _submatrix->at(i - 1, j - 1);
 }
 
-NonterminalList *CYKMatrix::column()
+void CYKMatrix::initMatrix(int sz)
 {
-    return _column;
+    Q_ASSERT(_matrix != NULL);
+    if (sz <= 0)
+        return;
+
+    // inits lower triangular matrix
+    _size(sz);
+    _matrix = new CYKMatrix*[sz];
+    for (int i=0; i < sz; ++i)
+        _matrix[i] = new CYKMatrix[i + 1];
 }
 
-NonterminalList &CYKMatrix::columnAt(int i)
+CYKCell &CYKMatrix::at(int i, int j) const
 {
-    Q_ASSERT(i >=0 && i < _size);
+    Q_ASSERT(i >= 0 && i < _size);
+    Q_ASSERT(j >= 0 && j < _size);
 
-    return _column[i] ;
-}
-
-CYKMatrix *CYKMatrix::produceNext() const
-{
-    return new CYKMatrix(_size + 1, this);
-}
-
-QVector<NonterminalList> CYKMatrix::row(int i) const
-{
-    QVector<NonterminalList> res(_size);
-    for (int j = 0; j < _size; ++j) {
-        res[j] = at(i, j);
-    }
-
-    return res;
+    return _matrix[i][j];
 }

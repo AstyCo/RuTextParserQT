@@ -28,6 +28,27 @@ RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateSt
                                                        const QString &arg2,
                                                        const QString &arg3 );
 
+namespace ExtensionsQtContainers {
+
+template <typename T, typename TValue>
+typename T::iterator insert_sorted(T &containerRA, const TValue &value) {
+    return containerRA.insert
+            (
+                std::upper_bound( containerRA.begin(), containerRA.end(), value ),
+                value
+            );
+}
+
+template <typename T>
+typename QList<T>::iterator insert_sorted(QList<T> &list, const T &value) {
+    return list.insert
+            (
+                std::upper_bound( list.begin(), list.end(), value ),
+                value
+            );
+}
+}
+
 
 namespace ExtensionsSerialization {
 

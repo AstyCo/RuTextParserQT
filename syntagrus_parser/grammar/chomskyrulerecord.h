@@ -23,6 +23,10 @@ struct ChomskyRuleRecord
     featureID rightID() const { return isRightRule ? dependRule : sourceRule;}
 };
 
+inline bool operator<(const ChomskyRuleRecord &lhs, const ChomskyRuleRecord &rhs) {
+    return lhs.sourceRule < rhs.sourceRule;
+}
+
 inline QDataStream &operator<<(QDataStream &ds, const ChomskyRuleRecord &s)
 {
     ds << s.isRightRule;

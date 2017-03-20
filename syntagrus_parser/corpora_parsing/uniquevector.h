@@ -9,7 +9,10 @@ class UniqueVector
 {
     QVector<TValue> values;
     QHash<TValue, TIndex> indexesHash;
+
+    const TIndex _invalidIndex;
 public:
+    UniqueVector(const TIndex &invalidIndex = -1) : _invalidIndex(invalidIndex) {}
 
     void append(const TValue &value)
     {
@@ -26,7 +29,7 @@ public:
     TIndex index(const TValue &feature) const
     {
         if (!indexesHash.contains(feature))
-            return -1;
+            return _invalidIndex;
         return indexesHash[feature];
     }
     int size() const { return values.size();}

@@ -10,7 +10,7 @@ void TreeCorpora::append(const SentenceInCorpora &sentence)
             _featureMapper.append(word.feature());
         }
         foreach (const SintRel &sintRel, word.links()) {
-            if (_linkMapper.index(sintRel.second) == -1)
+            if (_linkMapper.index(sintRel.second) == INVALID_LINK)
                 _linkMapper.append(sintRel.second);
         }
     }

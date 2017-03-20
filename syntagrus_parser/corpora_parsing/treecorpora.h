@@ -19,6 +19,8 @@ class SYNTAGRUS_PARSERSHARED_EXPORT TreeCorpora
     UniqueVector<linkID, QString>  _linkMapper;
 
 public:
+    TreeCorpora() : _linkMapper(INVALID_LINK) {}
+
     inline const QMultiHash<int, SentenceInCorpora> &sentencesBySize() const { return _sentencesBySize;}
     inline QMultiHash<int, SentenceInCorpora> &sentencesBySize() { return _sentencesBySize;}
     inline const UniqueVector<featureID, QString> &featureMapper() const { return _featureMapper;}

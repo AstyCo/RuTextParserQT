@@ -39,6 +39,7 @@ void CNFGrammar::append(const RuleRecord &rule)
                     ChomskyRuleRecord(depend.link, depend.terminal,
                                       rule.sourceRule(), depend.isRight)));
     }
+    std::sort(ruleIDs.begin(), ruleIDs.end());
 
     insert(rule.sourceRule(), ruleIDs);
 }
@@ -108,10 +109,12 @@ ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
         return foundID;
     }
 
+    ruleID newID = _ruleByID.size();
     // insert new rule
     _ruleByID.append(ScoredChomskyRuleRecord(rule));
     // fill cache
-    fillCache(_ruleByID.size() - 1);
+    fillCache(newID);
+    return newID;
 }
 
 ruleID CNFGrammar::find(const ChomskyRuleRecord &rule) const
@@ -134,7 +137,7 @@ void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
     }
     else {
         // insert new rule
-        _rulesByFeatureID[srcRuleID].append(ScoredListRuleID(ids));
+        ExtensionsQtContainers::insert_sorted(_rulesByFeatureID[srcRuleID], ScoredListRuleID(ids));
     }
 }
 

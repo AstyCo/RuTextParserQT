@@ -24,6 +24,10 @@ struct ScoredChomskyRuleRecord : public Scored
     ScoredChomskyRuleRecord(const ChomskyRuleRecord &ch) : Scored(1), rule(ch) {}
 };
 
+inline bool operator<(const ScoredChomskyRuleRecord &lhs, const ScoredChomskyRuleRecord &rhs) {
+    return lhs.rule < rhs.rule;
+}
+
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator<<(QDataStream &ds, const ScoredChomskyRuleRecord &s);
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, ScoredChomskyRuleRecord &s);
 
@@ -36,6 +40,10 @@ struct ScoredRuleID : public Scored
     ScoredRuleID(const ruleID &rid) : Scored(1), id(rid) {}
 
 };
+
+inline bool operator<(const ScoredRuleID &lhs, const ScoredRuleID &rhs) {
+    return lhs.id < rhs.id;
+}
 
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator<<(QDataStream &ds, const ScoredRuleID &s);
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, ScoredRuleID &s);
@@ -52,6 +60,10 @@ struct ScoredListRuleID : public Scored
     ScoredListRuleID(const ListRuleID &ids) : Scored(1), list(ids) {}
 
 };
+inline bool operator<(const ScoredListRuleID &lhs, const ScoredListRuleID &rhs) {
+    return lhs.list < rhs.list;
+}
+
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator<<(QDataStream &ds, const ScoredListRuleID &s);
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, ScoredListRuleID &s);
 

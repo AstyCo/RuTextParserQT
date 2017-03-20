@@ -9,3 +9,6 @@ LIBS += -L$$DESTDIR
 
 # defines RUTEXTPARSERQT_DIR in subprojects
 DEFINES += RUTEXTPARSERQT_DIR=\\\"$$_PRO_FILE_PWD_/../\\\"
+
+# add common directory to includepath
+INCLUDEPATH += $$PWD

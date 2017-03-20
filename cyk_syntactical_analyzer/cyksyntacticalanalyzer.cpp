@@ -3,68 +3,63 @@
 #include <QDebug>
 
 
-CYKSyntacticalAnalyzer::CYKSyntacticalAnalyzer()
+CYKSyntacticalAnalyzer::CYKSyntacticalAnalyzer(const QString &filename = QString())
 {
+    if (!filename.isEmpty()) {
+        _dumpFilename = filename;
+    }
+    else {
+        static QString dumpFilename("dumps/cyk_synt_analyzer.dump");
+
+#ifdef RUTEXTPARSERQT_DIR
+        _dumpFilename = RUTEXTPARSERQT_DIR + dumpFilename;
+#else
+        qWarning("RUTEXTPARSERQT_DIR not defined");
+
+        QString manualPath = "../../RuTextParserQT/";
+        _dumpFilename = manualPath + dumpFilename;
+#endif
+    }
+
+    loadFromDump(filename);
 }
 
-Sentences CYKSyntacticalAnalyzer::analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar)
+CYKSyntacticalAnalyzer::CYKSyntacticalAnalyzer(const FeatureMapper &fm, const LinkMapper &lm)
 {
-    Sentences result;
+
+}
+
+QList<RuleNode> CYKSyntacticalAnalyzer::analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar)
+{
+    QList<RuleNode> result;
     if (fv.isEmpty()) {
         qWarning("CYK Syntactical Analyzer trying to analyze empty sentence");
         return result;
     }
 
-    const int n = fv.size();    // n == number of rows in CYK-Algorithm
+    CYKMatrix matrix(fv.size());
+    int last = fv.size() - 1;
 
-    CYKMatrixVector *p_lastSubmatrixVector = NULL;
-    for (int j = n - 1; j >= 0; --j) {
-        CYKMatrixVector *p_newSubmatrixVector = getSubmatrixVector(fv, j, p_lastSubmatrixVector, grammar);
-
-        if (p_lastSubmatrixVector)
-            delete p_lastSubmatrixVector;
-        p_lastSubmatrixVector = p_newSubmatrixVector;
-    }
-    if (p_lastSubmatrixVector == NULL)
-        return result;
-
-    const quint32 sz = p_lastSubmatrixVector->size();
-    for (quint32 i = 0; i < sz; ++i)
-    {
-        qDebug() << QString("root[%1]").arg(QString::number(i)) << p_lastSubmatrixVector->at(i)->at(0,0);
-        if (p_lastSubmatrixVector->at(i)->at(0,0).contains(_ROOT))
-        {
-            result.append(
-                        grammar.toSentence(
-                            p_lastSubmatrixVector->at(i)->row(n-1)));
-        }
-    }
-    return result;
+    initLastRow(fv, matrix);
 }
 
-//CYKMatrix CYKSyntacticalAnalyzer::allocateMatrix(int n)
-//{
-//    CYKMatrix matrix = NULL;
+QList<RuleNode> CYKSyntacticalAnalyzer::analyze(const QStringList &v, const CNFGrammar &grammar)
+{
+    QList<RuleNode> result;
+    if (v.isEmpty()) {
+        qWarning("CYK Syntactical Analyzer trying to analyze empty sentence");
+        return result;
+    }
 
-//    if (n > 0)
-//        matrix = new NonterminalRow[n];
+    CYKMatrix matrix(v.size());
+    int last = v.size() - 1;
 
-//    for (int i = 0; i < n; ++i)
-//        matrix[i] = new NonterminalList[i + 1];
+}
 
-//    return matrix;
-//}
+void CYKSyntacticalAnalyzer::loadFromDump(const QString &filename)
+{
 
-//void CYKSyntacticalAnalyzer::deallocateMatrix(const CYKMatrix &matrix, int size)
-//{
-//    if (matrix == NULL) {
-//        qWarning("deallocateMatrix matrix is NULL");
-//        return;
-//    }
-//    for (int i = 0; i < size; ++i)
-//        delete [] matrix[i];
-//    delete [] matrix;
-//}
+}
 
 CYKMatrixVector *CYKSyntacticalAnalyzer::getSubmatrixVector(const AmbigiousStringVector &fv,
                                                             int from,
@@ -155,4 +150,13 @@ CYKMatrixVector *CYKSyntacticalAnalyzer::getSubmatrixVector(const AmbigiousStrin
     }
 
     return res;
+}
+
+void CYKSyntacticalAnalyzer::fillLastRow(const AmbigiousStringVector &fv, CYKMatrix &matrix)
+{
+    int last = fv.size() - 1;
+    for (int i=0; i < fv.size(); ++i) {
+        foreach (const QString &fw, fv)
+            matrix.at(last, i).append(CYKCellRecord());
+    }
 }
