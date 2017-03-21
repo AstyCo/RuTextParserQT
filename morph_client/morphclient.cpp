@@ -3,6 +3,7 @@
 #include "rutextparser_extensions.h"
 
 #include <QHostAddress>
+#include <QStringList>
 
 MorphClient::MorphClient()
 {

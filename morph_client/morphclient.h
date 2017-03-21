@@ -4,6 +4,7 @@
 #include "morph_client_global.h"
 
 #include <QTcpSocket>
+#include <QHostAddress>
 
 typedef QList<QPair<QString, qreal> > MorphResultType;
 

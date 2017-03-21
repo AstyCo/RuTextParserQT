@@ -58,7 +58,7 @@ public:
     inline int size() const;
     inline const QVector<ScoredChomskyRuleRecord> &rulesByID() const;
     inline const QVector<ListScoredListRuleID> &rulesByFeatureID() const;
-
+    inline const QVector<QVector<ListScoredRuleID> > &rulesByRightIDsHash() const;
 private:
     void initDumpFilename();
     void clearCache();
@@ -83,6 +83,9 @@ inline int CNFGrammar::size() const { return _ruleByID.size();}
 inline const QVector<ScoredChomskyRuleRecord> &CNFGrammar::rulesByID() const { return _ruleByID;}
 
 inline const QVector<ListScoredListRuleID> &CNFGrammar::rulesByFeatureID() const { return _rulesByFeatureID;}
+
+
+inline const QVector<QVector<ListScoredRuleID> > &CNFGrammar::rulesByRightIDsHash() const { return _rulesByRightIDsHash;}
 
 /// SERIALIZATION / DESERIALIZATION
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr);

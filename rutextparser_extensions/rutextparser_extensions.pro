@@ -24,10 +24,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 include(../link_projects_include.pri)
 
-SOURCES += rutextparser_extensions.cpp
+SOURCES += rutextparser_extensions.cpp \
+    dumpable.cpp
 
 HEADERS += rutextparser_extensions.h\
-        rutextparser_extensions_global.h
+        rutextparser_extensions_global.h \
+    dumpable.h
 
 unix {
     target.path = /usr/lib

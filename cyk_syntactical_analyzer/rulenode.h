@@ -13,5 +13,7 @@ struct RuleNode
     RuleNode(const ruleID &initID = -1) : id(initID) {}
 };
 
+typedef QList<RuleNode> ListRuleNode;
+
 
 #endif // RULENODE_H

@@ -12,7 +12,7 @@ CYKMatrix::CYKMatrix(int size)
 CYKMatrix::~CYKMatrix()
 {
     if (_matrix) {
-        for (int i=0; i < sz; ++i)
+        for (int i=0; i < _size; ++i)
             delete []_matrix[i];
         delete [] _matrix;
     }
@@ -25,10 +25,10 @@ void CYKMatrix::initMatrix(int sz)
         return;
 
     // inits lower triangular matrix
-    _size(sz);
-    _matrix = new CYKMatrix*[sz];
+    _size = sz;
+    _matrix = new CYKCell*[sz];
     for (int i=0; i < sz; ++i)
-        _matrix[i] = new CYKMatrix[i + 1];
+        _matrix[i] = new CYKCell[i + 1];
 }
 
 CYKCell &CYKMatrix::at(int i, int j) const

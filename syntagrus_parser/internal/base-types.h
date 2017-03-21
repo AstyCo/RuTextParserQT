@@ -2,6 +2,7 @@
 #define BASE_TYPES_H
 
 #include "corpora_parsing/uniquevector.h"
+#include "rutextparser_extensions/dumpable.h"
 
 #include <QtCore>
 
@@ -14,8 +15,16 @@ typedef qint16 ruleID;
 // 16-bit integer.
 typedef qint16 featureID;   // ( 0-535 syntagrus2012.)
 
-typedef UniqueVector<featureID, QString> FeatureMapper;
-typedef UniqueVector<linkID, QString> LinkMapper;
+struct FeatureMapper: public UniqueVector<featureID, QString>, public Dumpable
+{
+    FeatureMapper() : Dumpable("feature_mapper.dump") {}
+};
+
+struct LinkMapper: public UniqueVector<featureID, QString>, public Dumpable
+{
+    LinkMapper() : Dumpable("link_mapper.dump") {}
+};
+
 
 
 #endif // BASE_TYPES_H

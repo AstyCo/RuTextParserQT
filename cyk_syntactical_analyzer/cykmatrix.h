@@ -4,11 +4,9 @@
 #include "grammar/cnfgrammar.h"
 #include "cykcell.h"
 
-typedef unsigned char uchar;
-
 class CYKMatrix
 {
-    uchar _size;
+    short _size;
     CYKCell **_matrix;
 
 public:
@@ -16,7 +14,7 @@ public:
     ~CYKMatrix();
     void initMatrix(int sz);
 
-    uchar size() const { return _size; }
+    short size() const { return _size; }
 
 
     CYKCell &at(int i, int j) const;

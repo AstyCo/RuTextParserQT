@@ -209,7 +209,7 @@ bool SynTagRusParserTest::morphClientTestSentence(const OptimizedSentence &opt, 
                      .arg(QString::number(suc))
                      .arg(QString::number(failedCount))
                  << "failed sentence\n\t"
-                 << opt.getSentence(inn).join(' ')
+                 << opt.getSentence(inn).join(" ")
                  << endl;
     }
     else {
@@ -218,7 +218,7 @@ bool SynTagRusParserTest::morphClientTestSentence(const OptimizedSentence &opt, 
                           .arg(QString::number(suc))
                           .arg(QString::number(failedCount))
                  << "success sentence\n\t"
-                 << opt.getSentence(inn).join(' ')
+                 << opt.getSentence(inn).join(" ")
                  << endl;
     }
 
@@ -246,7 +246,7 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
     static long successfulCount = 0;
     bool successful = false;
 
-    QString feature = _optimized.featureMapper().feature(word.feature);
+    QString feature = _optimized.featureMapper().value(word.feature);
     MorphResultType analyzed = _client.analyzeWord(word.words[inn]);
 
     for (int i=0; i < analyzed.size(); ++i) {
@@ -254,7 +254,6 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
             // found
             successful = true;
     }
-    qint16;
 
     if (!successful) {
         ++failedCount;
