@@ -15,16 +15,16 @@ typedef QVector<SentenceInCorpora> TextInCorpora;
 class SYNTAGRUS_PARSERSHARED_EXPORT TreeCorpora
 {
     QMultiHash<int, SentenceInCorpora> _sentencesBySize;
-    UniqueVector<featureID, QString>  _featureMapper;
-    UniqueVector<linkID, QString>  _linkMapper;
+    FeatureMapper  _featureMapper;
+    LinkMapper  _linkMapper;
 
 public:
-    TreeCorpora() : _linkMapper(INVALID_LINK) {}
+    TreeCorpora() : _linkMapper() {}
 
     inline const QMultiHash<int, SentenceInCorpora> &sentencesBySize() const { return _sentencesBySize;}
     inline QMultiHash<int, SentenceInCorpora> &sentencesBySize() { return _sentencesBySize;}
-    inline const UniqueVector<featureID, QString> &featureMapper() const { return _featureMapper;}
-    inline const UniqueVector<linkID, QString> &linkMapper() const { return _linkMapper;}
+    inline const FeatureMapper &featureMapper() const { return _featureMapper;}
+    inline const LinkMapper &linkMapper() const { return _linkMapper;}
 
 
     void append(const SentenceInCorpora &text);

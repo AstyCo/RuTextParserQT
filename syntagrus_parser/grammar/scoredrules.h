@@ -9,7 +9,7 @@ struct Scored
     qreal score;
 
     Scored(qreal initScore = 0) : score(initScore) {}
-    void increaseScore() { ++score;}
+    void increaseScore(qreal val = 1) { score+=val;}
 };
 
 SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator<<(QDataStream &ds, const Scored &s);

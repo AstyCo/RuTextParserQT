@@ -308,7 +308,7 @@ void SynTagRusParserTest::grammarTest()
     _grammarParser.serializeGrammar();
     _grammarParser.deserializeGrammar();
 
-    qDebug() << "Grammar size after serialization" << _grammarParser.getGrammar()->size();
+    qDebug() << "Grammar size after deserialization" << _grammarParser.getGrammar()->size();
     QVERIFY2(sz == _grammarParser.getGrammar()->size(),
              "Grammar of different size after serialization/deserialization");
 }
@@ -328,19 +328,25 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
-    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(5).value();
+    _syntagrusParser.deserializeTreeCorpora();
+    _grammarParser.deserializeGrammar();
+    CYKSyntacticalAnalyzer an(_syntagrusParser.getTreeCorpora()->featureMapper(),
+                              _syntagrusParser.getTreeCorpora()->linkMapper());
+
+    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(20).value();
     Q_ASSERT(!sentence.skip());
     qDebug() << "sentence" << sentence.qDebugSentence().wordList()
              << '\n' << sentence.qDebugSentence().featList();
 
     qDebug() << "starting analyzing";
 
-    Sentences analyzedSentences = CYKSyntacticalAnalyzer::analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
+    QList<QSharedPointer<RuleNode> > analyzedSentences = an.analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
 
     QVERIFY2(!analyzedSentences.isEmpty(), "not found");
     qDebug() << "analyzedSentences";
-    foreach (const QStringList &sl, analyzedSentences)
-        qDebug() << "\tSentence:" << sl;
+    qDebug() << "analyzedSz" << analyzedSentences.size();
+//    foreach (const QStringList &sl, analyzedSentences)
+//        qDebug() << "\tSentence:" << sl;
 }
 
 void SynTagRusParserTest::withoutSerialization()

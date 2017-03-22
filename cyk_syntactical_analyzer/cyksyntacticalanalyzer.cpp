@@ -22,59 +22,162 @@ CYKSyntacticalAnalyzer::CYKSyntacticalAnalyzer(const FeatureMapper &fm, const Li
 
 }
 
-QList<ListRuleNode> CYKSyntacticalAnalyzer::analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar)
+QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar)
 {
-    QList<ListRuleNode> result;
+    QList<QSharedPointer<RuleNode> > result;
     if (fv.isEmpty()) {
         qWarning("CYK Syntactical Analyzer trying to analyze empty sentence");
         return result;
     }
 
+    qDebug() << "analyzing fv";
     CYKMatrix matrix(fv.size());
     int last = fv.size() - 1;
 
     fillLastRow(fv, matrix);
+    qDebug() << "last row filled";
+    for (int j = last-1; j >= 0; --j) {
+        for (int i = last-1; i >= j; --i) {
+            calcCell(matrix, i, j, grammar);
+            qDebug() << QString("cell(%1,%2) size:%3")
+                        .arg(QString::number(i))
+                        .arg(QString::number(j))
+                        .arg(QString::number(matrix.at(i,j).size()));
+        }
+    }
+    qDebug() << "cells calculated";
+    CYKCell &rootCell = matrix.at(0,0);
+    CYKCellConstIterator i(rootCell.constBegin());
+    QVector<Scored> rootScores = grammar.rootScore();
+    while (i!=rootCell.constEnd()) {
+        qreal score = rootScores[i.key()].score;
+        if (score == 0) {
+            qDebug() << _fmapper.value(i.key()) << "not a root";
+        }
+        else {
+            result.append(i.value());
+            qDebug() << _fmapper.value(i.key()) << "added with score" << score;
+        }
 
-}
-
-QList<ListRuleNode> CYKSyntacticalAnalyzer::analyze(const QStringList &v, const CNFGrammar &grammar)
-{
-    QList<ListRuleNode> result;
-    if (v.isEmpty()) {
-        qWarning("CYK Syntactical Analyzer trying to analyze empty sentence");
-        return result;
+        ++i;
     }
 
-    CYKMatrix matrix(v.size());
-    int last = v.size() - 1;
+    return result;
+}
 
+inline AmbigiousStringVector toAmbigious(const QStringList &sentence)
+{
+    AmbigiousStringVector res;
+    for (int i=0; i < sentence.size(); ++i)
+        res.append(QStringList(sentence.at(i)));
+    return res;
+}
+
+QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const QStringList &v, const CNFGrammar &grammar)
+{
+    return analyze(toAmbigious(v), grammar);
 }
 
 void CYKSyntacticalAnalyzer::fillLastRow(const AmbigiousStringVector &fv, CYKMatrix &matrix)
 {
     int last = fv.size() - 1;
     for (int i=0; i < fv.size(); ++i) {
-        foreach (const QString &fw, fv[i])
-            matrix.at(last, i).append(CYKCellRecord());
+        foreach (const QString &f, fv[i]) {
+            featureID fid = _fmapper.index(f);
+            if (_fmapper.isValid(fid))
+                matrix.at(last, i).insert(fid, QSharedPointer<RuleNode>(new RuleNode(1))); // TODO score
+
+            else
+                Q_ASSERT(false);
+        }
+        qDebug() << QString("cell(%1,%2) size:%3")
+                    .arg(QString::number(last))
+                    .arg(QString::number(i))
+                    .arg(QString::number(matrix.at(last,i).size()));
     }
 }
-
-//                for (int rowIndex = lastRowIndex - 1; rowIndex >= 0; --rowIndex) {
-//                    for (int h = 1; rowIndex + h <= lastRowIndex; ++h) {
-//                        NonterminalList &tmp1 = newMatrix->at(
-//                                    lastRowIndex + 1 - h,
-//                                    lastRowIndex - rowIndex + 1 - h);
 
 void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar)
 {
+    qDebug() << QString("calculating cell (%1,%2)").arg(QString::number(i)).arg(QString::number(j));
     short sz = matrix.size();
     short h  = sz - i - 1;
 
-    for (int p = 1; p <= h; ++p) {
-        CYKCell &leftCell = matrix.at(i+p, j);
-        CYKCell &rightCell = matrix.at(i+h-p, j+h+1-p);
+    CYKCell &cell(matrix.at(i, j));
+    QSet<ruleID> resultRules;
 
+    for (int p = 0; p < h; ++p) {
+        const CYKCell &leftCell = matrix.at(i+p+1, j);
+        const CYKCell &rightCell = matrix.at(i+h-p, j+h-p);
+
+        CYKCellConstIterator l(leftCell.constBegin());
+        while (l != leftCell.constEnd()) {
+            const QVector<ListScoredRuleID> &rulesWithLeft(grammar.rulesByRightIDsHash()[l.key()]);
+            CYKCellConstIterator r(rightCell.constBegin());
+            while (r != rightCell.constEnd()) {
+                qDebug() << QString("(%1,%2)(%3,%4)")
+                            .arg(QString::number(i+p+1))
+                            .arg(QString::number(j))
+                            .arg(QString::number(i+h-p))
+                            .arg(QString::number(j+h-p))
+
+                          <<  "looking for rule between"<<_fmapper.value(l.key())
+                         <<"and" <<_fmapper.value(r.key())
+                        << QString("[%1]").arg(QString::number(rulesWithLeft[r.key()].size()));
+                addRecord(cell, l.value(), r.value(),
+                          rulesWithLeft[r.key()], grammar.rulesByID());
+                r++;
+            }
+            l++;
+        }
+
+//        for (int l=0; l < leftCell.size(); ++l) {
+//            QVector<ListScoredRuleID> &rulesWithLeft(grammar.rulesByRightIDsHash()[leftCell[l].fid]);
+//            for (int r=0; r < rightCell.size(); ++r) {
+
+//            }
+//        }
 
     }
 
 }
+
+void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
+                                       const QSharedPointer<RuleNode> &l,
+                                       const QSharedPointer<RuleNode> &r,
+                                       const ListScoredRuleID &scoredRuleIDs,
+                                       const QVector<ScoredChomskyRuleRecord> &rulesByID)
+{
+
+    for (int i=0; i < scoredRuleIDs.size(); ++i) {
+        const ScoredChomskyRuleRecord &ruleRecord = rulesByID[scoredRuleIDs.at(i).id];
+        const QSharedPointer<RuleNode> &src = (ruleRecord.rule._isRightRule ? r : l);
+        const QSharedPointer<RuleNode> &dep = (ruleRecord.rule._isRightRule ? l : r);
+        featureID fid = ruleRecord.rule._sourceFID;
+
+        if (src->isLeaf()) {
+            QSharedPointer<RuleNode> rn(new RuleNode(scoredRuleIDs.at(i).id, dep, 1));
+            cell.insert(fid, rn);
+        }
+        else {
+            QSharedPointer<RuleNode> rn(new RuleNode(1));
+            rn->rules = src->rules;
+            rn->rules.append(RuleLink(scoredRuleIDs.at(i).id, dep));
+
+            if (!cell.contains(fid, rn)) {
+                cell.insert(fid, rn);
+            }
+            else {
+                qDebug() << "cell contains" << fid;
+            }
+        }
+
+    }
+}
+
+//featureID CYKSyntacticalAnalyzer::srcID(const CYKCellRecord &r, const CNFGrammar &grammar)
+//{
+//    if (r._topRules.isEmpty())
+//        return -1;
+//    return grammar.rulesByID()[r._topRules.first().id].rule.sourceRule;
+//}

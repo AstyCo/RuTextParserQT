@@ -14,6 +14,7 @@
 class SYNTAGRUS_PARSERSHARED_EXPORT CNFGrammar
 {
     QString _dumpFilename;
+    featureID _size;
 
     QVector<Scored> _rootScore;  ///< [featureID]-><root score>
     QVector<ScoredChomskyRuleRecord> _ruleByID; ///< [ruleID]->RuleRecord
@@ -56,10 +57,13 @@ public:
 
     inline bool isEmpty() const;
     inline int size() const;
+    inline const QVector<Scored> &rootScore() const;
     inline const QVector<ScoredChomskyRuleRecord> &rulesByID() const;
     inline const QVector<ListScoredListRuleID> &rulesByFeatureID() const;
     inline const QVector<QVector<ListScoredRuleID> > &rulesByRightIDsHash() const;
 private:
+    void resizeVectors(int sz);
+    void resizeMatrix(int sz);
     void initDumpFilename();
     void clearCache();
     void fillCache(const int &newID );
@@ -84,6 +88,7 @@ inline const QVector<ScoredChomskyRuleRecord> &CNFGrammar::rulesByID() const { r
 
 inline const QVector<ListScoredListRuleID> &CNFGrammar::rulesByFeatureID() const { return _rulesByFeatureID;}
 
+inline const QVector<Scored> &CNFGrammar::rootScore() const { return _rootScore;}
 
 inline const QVector<QVector<ListScoredRuleID> > &CNFGrammar::rulesByRightIDsHash() const { return _rulesByRightIDsHash;}
 

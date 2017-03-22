@@ -79,6 +79,7 @@ void TreeParser::parseSentence(const SentenceInCorpora &sentence,
                                const UniqueVector<featureID, QString> &fmapper,
                                const UniqueVector<linkID, QString> &lmapper)
 {
+//    qDebug() << "parse" << sentence.qDebugSentence().wordList();
     parseNode(sentence.root(), fmapper, lmapper);
 }
 
@@ -96,7 +97,8 @@ void TreeParser::parseNode(const RecordNode *node,
         // root rule
         _grammar->addRoot(fid);
     }
-    else {
+
+    if (!node->childNodes().isEmpty()) {
         RuleRecord rule(fid);
 
         foreach (const RecordNode *child, node->childNodes()) {
@@ -104,7 +106,13 @@ void TreeParser::parseNode(const RecordNode *node,
             featureID childFid = fmapper.index(child->record()._feat);
             rule.append(lid, childFid, node->record().before(child->record()));
         }
+        _grammar->append(rule);
+    }
 
+
+    foreach (const RecordNode *child, node->childNodes()) {
+        // also, parse child
+        parseNode(child, fmapper, lmapper);
     }
 }
 

@@ -16,7 +16,7 @@ public:
 
     void append(const TValue &value)
     {
-        Q_ASSERT(indexesHash.contains(value));
+        Q_ASSERT(!indexesHash.contains(value));
 
         values.append(value);
         indexesHash.insert(value, values.size() - 1);  // last index
@@ -38,6 +38,8 @@ public:
         values.clear();
         indexesHash.clear();
     }
+
+    bool isValid(const TIndex &index) const { return index != _invalidIndex;}
 
     template <typename TI, typename TV>
     friend QDataStream &operator<<(QDataStream &ds, const UniqueVector<TI, TV> &f);

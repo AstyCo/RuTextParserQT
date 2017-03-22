@@ -23,12 +23,17 @@ public:
     CYKSyntacticalAnalyzer(const QString &fmapper = QString(), const QString &lmapper = QString());   ///< for deserialization
     CYKSyntacticalAnalyzer(const FeatureMapper &fm, const LinkMapper &lm);
 
-    QList<ListRuleNode> analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar);
-    QList<ListRuleNode> analyze(const QStringList &v, const CNFGrammar &grammar);
+    QList<QSharedPointer<RuleNode> > analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar);
+    QList<QSharedPointer<RuleNode> > analyze(const QStringList &v, const CNFGrammar &grammar);
 
 private:
     void fillLastRow(const AmbigiousStringVector &fv, CYKMatrix &matrix);
     void calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar);
+    void addRecord(CYKCell &cell,
+                   const QSharedPointer<RuleNode> &l,
+                   const QSharedPointer<RuleNode> &r,
+                   const ListScoredRuleID &scoredRuleIDs,
+                   const QVector<ScoredChomskyRuleRecord> &rulesByID);
 
 };
 

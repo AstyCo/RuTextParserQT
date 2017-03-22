@@ -3,15 +3,26 @@
 
 #include "syntagrus_parser/internal/base-types.h"
 #include "rulenode.h"
+#include "syntagrus_parser/grammar/scoredrules.h"
 
-struct CYKCellRecord
+#include <QSharedPointer>
+
+//typedef QMultiMap<featureID, RuleNode> CYKCell;
+
+struct CYKCell: public QMultiMap<featureID, QSharedPointer<RuleNode> >
 {
-    featureID fid;
-    QList<RuleNode> _topRules;
 
-    CYKCellRecord(const featureID &initFid = -1) : fid(initFid) {}
 };
 
-typedef QList<CYKCellRecord> CYKCell;
+//struct ScoredFeatureID: public Scored
+//{
+//    featureID fid;
+
+//    ScoredFeatureID(qreal scoreVal = 0) : Scored(scoreVal) {}
+//};
+
+
+typedef CYKCell::iterator CYKCellIterator;
+typedef CYKCell::const_iterator CYKCellConstIterator;
 
 #endif // CYKCELL_H

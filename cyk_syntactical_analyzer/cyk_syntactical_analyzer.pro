@@ -28,7 +28,8 @@ include(../syntagrus_parser_include.pri)
 
 SOURCES += \
     cyksyntacticalanalyzer.cpp \
-    cykmatrix.cpp
+    cykmatrix.cpp \
+    rulenode.cpp
 
 HEADERS += \
     cyk_syntactical_analyzer_global.h \

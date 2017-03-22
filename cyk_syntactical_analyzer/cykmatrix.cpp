@@ -34,7 +34,7 @@ void CYKMatrix::initMatrix(int sz)
 CYKCell &CYKMatrix::at(int i, int j) const
 {
     Q_ASSERT(i >= 0 && i < _size);
-    Q_ASSERT(j >= 0 && j < _size);
+    Q_ASSERT_X(j <= i && j >= 0,"", toWarning("(i:%1,j:%2)",QString::number(i), QString::number(i)));
 
     return _matrix[i][j];
 }

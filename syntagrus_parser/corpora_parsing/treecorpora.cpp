@@ -26,8 +26,8 @@ void TreeCorpora::append(const TextInCorpora &text)
 QDataStream &operator<<(QDataStream &ds, const TreeCorpora &t)
 {
     ds << t._sentencesBySize;
-    ds << t._featureMapper;
-    ds << t._linkMapper;
+    t._featureMapper.dump();
+    t._linkMapper.dump();
 
     return ds;
 }
@@ -35,8 +35,8 @@ QDataStream &operator<<(QDataStream &ds, const TreeCorpora &t)
 QDataStream &operator>>(QDataStream &ds, TreeCorpora &t)
 {
     ds >> t._sentencesBySize;
-    ds >> t._featureMapper;
-    ds >> t._linkMapper;
+    t._featureMapper.load();
+    t._linkMapper.load();
 
     return ds;
 }

@@ -17,14 +17,14 @@ OptimizedTreeCorpora::OptimizedTreeCorpora(const TreeCorpora &tree)
         QMultiHash<int, OptimizedSentence>::iterator insertedSentence
                 = _multihashSentences.find(it.key(), optimizedSentence);
         if (insertedSentence != _multihashSentences.end()) {
-            QVector<OptimizedWord> &owords = insertedSentence.value().words();
-            const QVector<WordInCorpora> &swords = it.value().qDebugSentence().vector();
+//            QVector<OptimizedWord> &owords = insertedSentence.value().words();
+//            const QVector<WordInCorpora> &swords = it.value().qDebugSentence().vector();
 
-            qDebug() << "EQUALS";
-            for (int i=0; i<owords.size(); ++i) {
-                qDebug() << swords[i].feature() << swords[i].word();
-                qDebug() << owords[i].words.first();
-            }
+//            qDebug() << "EQUALS";
+//            for (int i=0; i<owords.size(); ++i) {
+//                qDebug() << swords[i].feature() << swords[i].word();
+//                qDebug() << owords[i].words.first();
+//            }
 
             insertedSentence.value().append(it.value());
         }

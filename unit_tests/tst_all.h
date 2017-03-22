@@ -43,10 +43,8 @@ private:
 
 private:
     void treeCorporaSerializationTest();
-    void testCYKSyntacticalAnalyzer();
 
 
-    void wholeTest();
     void withoutSerialization();
     void test();
 
@@ -56,8 +54,10 @@ private:
 
     void simpleTestMorphClient();
     void testMorphClient();
-private Q_SLOTS:
     void grammarTest();
+    void wholeTest();
+private Q_SLOTS:
+    void testCYKSyntacticalAnalyzer();
 };
 
 #endif // TST_ALL_H

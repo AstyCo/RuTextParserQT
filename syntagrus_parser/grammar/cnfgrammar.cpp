@@ -14,16 +14,11 @@ CNFGrammar::CNFGrammar()
 }
 
 CNFGrammar::CNFGrammar(const featureID &featureCount)
+    : _size(featureCount)
 {
     initDumpFilename();
 
-    // init vectors
-    _rootScore.resize(featureCount);
-    _rulesByFeatureID.resize(featureCount);
-    // init matrix
-    _rulesByRightIDsHash.resize(featureCount);
-    for (int i=0; i < featureCount; ++i)
-        _rulesByRightIDsHash[i].resize(featureCount);
+    resizeVectors(featureCount);
 }
 
 CNFGrammar::~CNFGrammar()
@@ -55,6 +50,7 @@ void CNFGrammar::clear()
 {
     clearCache();
 
+   _rootScore.clear();
     _ruleByID.clear();
     _rulesByFeatureID.clear();
 }
@@ -72,6 +68,22 @@ void CNFGrammar::dump() const
 void CNFGrammar::loadFromDump()
 {
     ExtensionsSerialization::loadFromDump(_dumpFilename, *this);
+}
+
+void CNFGrammar::resizeVectors(int sz)
+{
+    // init vectors
+    _rootScore.resize(sz);
+    _rulesByFeatureID.resize(sz);
+    resizeMatrix(sz);
+}
+
+void CNFGrammar::resizeMatrix(int sz)
+{
+    // init matrix
+    _rulesByRightIDsHash.resize(sz);
+    for (int i=0; i < sz; ++i)
+        _rulesByRightIDsHash[i].resize(sz);
 }
 
 void CNFGrammar::initDumpFilename()
@@ -122,7 +134,7 @@ ruleID CNFGrammar::find(const ChomskyRuleRecord &rule) const
     const ListScoredRuleID &rules = _rulesByRightIDsHash[rule.leftID()][rule.rightID()];
 
     foreach (const ScoredRuleID &id, rules) {
-        if (_ruleByID[id.id].rule.sourceRule == rule.sourceRule)
+        if (_ruleByID[id.id].rule._sourceFID == rule._sourceFID)
             return id.id;
     }
     // not found
@@ -154,9 +166,10 @@ int CNFGrammar::find(const featureID &srcRuleID, const ListRuleID &ids) const
 
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr)
 {
-    ds << gr._dumpFilename;
+    ds << gr._size;
     ds << gr._ruleByID;
     ds << gr._rulesByFeatureID;
+    ds << gr._rootScore;
 
     return ds;
 }
@@ -167,11 +180,12 @@ QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
         qWarning("Trying to deserialize CNFGrammar which is not empty (Tip: call clear() )");
         return ds;
     }
-
-    ds >> gr._dumpFilename;
+    ds >> gr._size;
     ds >> gr._ruleByID;
     ds >> gr._rulesByFeatureID;
+    ds >> gr._rootScore;
 
+    gr.resizeMatrix(gr._size);
     for (int i=0; i < gr._ruleByID.size(); ++i)
         gr.fillCache(i);
 
