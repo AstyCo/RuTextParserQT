@@ -115,15 +115,15 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
             const QVector<ListScoredRuleID> &rulesWithLeft(grammar.rulesByRightIDsHash()[l.key()]);
             CYKCellConstIterator r(rightCell.constBegin());
             while (r != rightCell.constEnd()) {
-                qDebug() << QString("(%1,%2)(%3,%4)")
-                            .arg(QString::number(i+p+1))
-                            .arg(QString::number(j))
-                            .arg(QString::number(i+h-p))
-                            .arg(QString::number(j+h-p))
+//                qDebug() << QString("(%1,%2)(%3,%4)")
+//                            .arg(QString::number(i+p+1))
+//                            .arg(QString::number(j))
+//                            .arg(QString::number(i+h-p))
+//                            .arg(QString::number(j+h-p))
 
-                          <<  "looking for rule between"<<_fmapper.value(l.key())
-                         <<"and" <<_fmapper.value(r.key())
-                        << QString("[%1]").arg(QString::number(rulesWithLeft[r.key()].size()));
+//                          <<  "looking for rule between"<<_fmapper.value(l.key())
+//                         <<"and" <<_fmapper.value(r.key())
+//                        << QString("[%1]").arg(QString::number(rulesWithLeft[r.key()].size()));
                 addRecord(cell, l.value(), r.value(),
                           rulesWithLeft[r.key()], grammar.rulesByID());
                 r++;
@@ -151,25 +151,34 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
 
     for (int i=0; i < scoredRuleIDs.size(); ++i) {
         const ScoredChomskyRuleRecord &ruleRecord = rulesByID[scoredRuleIDs.at(i).id];
-        const QSharedPointer<RuleNode> &src = (ruleRecord.rule._isRightRule ? r : l);
-        const QSharedPointer<RuleNode> &dep = (ruleRecord.rule._isRightRule ? l : r);
+        const QSharedPointer<RuleNode> &src = (ruleRecord.rule._isRightRule ? l : r);
+        const QSharedPointer<RuleNode> &dep = (ruleRecord.rule._isRightRule ? r : l);
         featureID fid = ruleRecord.rule._sourceFID;
-
+        QSharedPointer<RuleNode> rn;
         if (src->isLeaf()) {
-            QSharedPointer<RuleNode> rn(new RuleNode(scoredRuleIDs.at(i).id, dep, 1));
+            rn = QSharedPointer<RuleNode>(new RuleNode(scoredRuleIDs.at(i).id, dep, 1));
+//            cell.insert(fid, rn);
+        }
+        else {
+            rn = QSharedPointer<RuleNode>(new RuleNode(1));
+            rn->rules = src->rules;
+            ExtensionsQtContainers::insert_sorted(rn->rules, RuleLink(scoredRuleIDs.at(i).id, dep));
+//            rn->rules.append(RuleLink(scoredRuleIDs.at(i).id, dep));
+
+//            if (!cell.contains(fid, rn)) {
+//                cell.insert(fid, rn);
+//            }
+//            else {
+//                qDebug() << "cell contains" << fid;
+//            }
+        }
+        if (!cell.contains(fid, rn)) {
             cell.insert(fid, rn);
         }
         else {
-            QSharedPointer<RuleNode> rn(new RuleNode(1));
-            rn->rules = src->rules;
-            rn->rules.append(RuleLink(scoredRuleIDs.at(i).id, dep));
-
-            if (!cell.contains(fid, rn)) {
-                cell.insert(fid, rn);
-            }
-            else {
-                qDebug() << "cell contains" << fid;
-            }
+            CYKCellIterator i(cell.find(fid, rn));
+            i.value()->increaseScore();
+//            qDebug() << "cell contains" << fid;
         }
 
     }

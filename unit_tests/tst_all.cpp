@@ -283,13 +283,29 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
     return successful;
 }
 
+void SynTagRusParserTest::deserializeTreeCorpora()
+{
+    static bool deserialized = false;
+    if (deserialized)
+        return;
+    _syntagrusParser.deserializeTreeCorpora();
+}
+
+void SynTagRusParserTest::deserializeGrammar()
+{
+    static bool deserialized = false;
+    if (deserialized)
+        return;
+    _grammarParser.deserializeGrammar();
+}
+
 void SynTagRusParserTest::treeCorporaSerializationTest()
 {
     TreeCorpora *treeCorpora = _syntagrusParser.getTreeCorpora();
     long long sizeBefore = treeCorpora->size();
 
     _syntagrusParser.serializeTreeCorpora();
-    _syntagrusParser.deserializeTreeCorpora();
+    deserializeTreeCorpora();
 
     qDebug() << "size after deserialization" << _syntagrusParser.getTreeCorpora()->size();
 
@@ -299,14 +315,14 @@ void SynTagRusParserTest::treeCorporaSerializationTest()
 
 void SynTagRusParserTest::grammarTest()
 {
-    _syntagrusParser.deserializeTreeCorpora();
+    deserializeTreeCorpora();
     _grammarParser.parseTree(*_syntagrusParser.getTreeCorpora());
 
     int sz = _grammarParser.getGrammar()->size();
     qDebug() << "Grammar size before serialization" << sz;
 
     _grammarParser.serializeGrammar();
-    _grammarParser.deserializeGrammar();
+    deserializeGrammar();
 
     qDebug() << "Grammar size after deserialization" << _grammarParser.getGrammar()->size();
     QVERIFY2(sz == _grammarParser.getGrammar()->size(),
@@ -328,12 +344,12 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
-    _syntagrusParser.deserializeTreeCorpora();
-    _grammarParser.deserializeGrammar();
+    deserializeTreeCorpora();
+    deserializeGrammar();
     CYKSyntacticalAnalyzer an(_syntagrusParser.getTreeCorpora()->featureMapper(),
                               _syntagrusParser.getTreeCorpora()->linkMapper());
 
-    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(20).value();
+    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(9).value();
     Q_ASSERT(!sentence.skip());
     qDebug() << "sentence" << sentence.qDebugSentence().wordList()
              << '\n' << sentence.qDebugSentence().featList();

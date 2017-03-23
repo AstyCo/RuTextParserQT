@@ -42,6 +42,9 @@ private:
     bool morphClientTestWord(const OptimizedWord &word, const int &inn);
 
 private:
+    void deserializeTreeCorpora();
+    void deserializeGrammar();
+
     void treeCorporaSerializationTest();
 
 
