@@ -30,6 +30,12 @@ RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateSt
 
 namespace ExtensionsQtContainers {
 
+
+template <typename T>
+inline bool compareBySize(const T &lhs, const T &rhs) {
+    return lhs.size() < rhs.size();
+}
+
 template <typename T, typename TValue>
 typename T::iterator insert_sorted(T &containerRA, const TValue &value) {
     return containerRA.insert

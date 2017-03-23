@@ -22,6 +22,8 @@ struct ScoredChomskyRuleRecord : public Scored
 
     ScoredChomskyRuleRecord() : Scored() {}
     ScoredChomskyRuleRecord(const ChomskyRuleRecord &ch) : Scored(1), rule(ch) {}
+
+    QString toString(const FeatureMapper &fmapper, const LinkMapper &lmapper) const { return rule.toString(fmapper, lmapper) + QString(" (score:%1)").arg(score);}
 };
 
 inline bool operator<(const ScoredChomskyRuleRecord &lhs, const ScoredChomskyRuleRecord &rhs) {

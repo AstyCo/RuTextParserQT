@@ -32,7 +32,7 @@ private:
     void addRecord(CYKCell &cell,
                    const QSharedPointer<RuleNode> &l,
                    const QSharedPointer<RuleNode> &r,
-                   const ListScoredRuleID &scoredRuleIDs,
+                   const ListRuleID &scoredRuleIDs,
                    const QVector<ScoredChomskyRuleRecord> &rulesByID);
 
 };

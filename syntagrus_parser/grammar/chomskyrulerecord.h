@@ -3,6 +3,8 @@
 
 #include "internal/base-types.h"
 
+#include <QStringBuilder>
+
 struct ChomskyRuleRecord
 {
     bool         _isRightRule    : 1;
@@ -21,6 +23,23 @@ struct ChomskyRuleRecord
 
     featureID leftID() const { return _isRightRule ? _sourceFID : _dependFID;}
     featureID rightID() const { return _isRightRule ? _dependFID : _sourceFID;}
+
+    bool operator==(const ChomskyRuleRecord &other) const {
+        return _isRightRule == other._isRightRule
+                && _linkID == other._linkID
+                && _dependFID == other._dependFID
+                && _sourceFID == other._sourceFID;
+    }
+
+
+    QString toString(const FeatureMapper &fmapper, const LinkMapper &lmapper) const {
+        return fmapper.value(_sourceFID)
+                % QString("-%1->").arg(lmapper.value(_linkID))
+                % (_isRightRule ? QString("\'%1\'+\'%2\'")
+                                : QString("\'%2\'+\'%1\'"))
+                .arg(fmapper.value(_sourceFID))
+                .arg(fmapper.value(_dependFID));
+    }
 };
 
 inline bool operator<(const ChomskyRuleRecord &lhs, const ChomskyRuleRecord &rhs) {

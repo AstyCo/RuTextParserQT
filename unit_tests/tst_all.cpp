@@ -318,15 +318,15 @@ void SynTagRusParserTest::grammarTest()
     deserializeTreeCorpora();
     _grammarParser.parseTree(*_syntagrusParser.getTreeCorpora());
 
-    int sz = _grammarParser.getGrammar()->size();
-    qDebug() << "Grammar size before serialization" << sz;
+    QString report = _grammarParser.getGrammar()->toReport(_syntagrusParser.getTreeCorpora()->featureMapper());
+    qDebug() << "Grammar before serialization" << report;
 
     _grammarParser.serializeGrammar();
     deserializeGrammar();
 
-    qDebug() << "Grammar size after deserialization" << _grammarParser.getGrammar()->size();
-    QVERIFY2(sz == _grammarParser.getGrammar()->size(),
-             "Grammar of different size after serialization/deserialization");
+    qDebug() << "Grammar after deserialization" << _grammarParser.getGrammar()->toReport(_syntagrusParser.getTreeCorpora()->featureMapper());
+    QVERIFY2(report == _grammarParser.getGrammar()->toReport(_syntagrusParser.getTreeCorpora()->featureMapper()),
+             "Grammar different after serialization/deserialization");
 }
 
 AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
@@ -344,12 +344,18 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
-    deserializeTreeCorpora();
+    parsingTest();
+//    deserializeTreeCorpora();
     deserializeGrammar();
-    CYKSyntacticalAnalyzer an(_syntagrusParser.getTreeCorpora()->featureMapper(),
-                              _syntagrusParser.getTreeCorpora()->linkMapper());
+    FeatureMapper fmapper;
+    LinkMapper lmapper;
+    fmapper.load();
+    lmapper.load();
+    qDebug().noquote() << _grammarParser.getGrammar()->toReport(fmapper);
+    CYKSyntacticalAnalyzer an(fmapper, lmapper);
+    return;
 
-    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(9).value();
+    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(6).value();
     Q_ASSERT(!sentence.skip());
     qDebug() << "sentence" << sentence.qDebugSentence().wordList()
              << '\n' << sentence.qDebugSentence().featList();
@@ -387,7 +393,7 @@ void SynTagRusParserTest::wholeTest()
     qDebug() << "Size of TreeCorpora after deserialization" << _syntagrusParser.getTreeCorpora()->size();
     qDebug() << "Grammar size after serialization" << _grammarParser.getGrammar()->size();
 
-    testCYKSyntacticalAnalyzer();
+//    testCYKSyntacticalAnalyzer();
 }
 
 

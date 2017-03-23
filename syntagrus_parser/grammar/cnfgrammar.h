@@ -3,6 +3,7 @@
 
 #include "syntagrus_parser_global.h"
 #include "internal/base-types.h"
+//#include "rutextparser_extensions.h"
 #include "rulerecord.h"
 #include "scoredrules.h"
 
@@ -21,11 +22,24 @@ class SYNTAGRUS_PARSERSHARED_EXPORT CNFGrammar
     QVector<ListScoredListRuleID> _rulesByFeatureID;   ///< [featureID]->(ListOf(ListOf(<ruleID | featureID->X Y>), <number of occuriences>))
 
     // hash
-    QVector<QVector<ListScoredRuleID> > _rulesByRightIDsHash;     ///< [leftFeatureID][rightFeatureID]->ListOf(<ruleID | X->leftFeatureID rightFeatureID>)
+    QVector<QVector<ListRuleID> > _rulesByRightIDsHash;     ///< [leftFeatureID][rightFeatureID]->ListOf(<ruleID | X->leftFeatureID rightFeatureID>)
 public:
     CNFGrammar();   ///< only for deserialization
     CNFGrammar(const featureID &featureCount);
     ~CNFGrammar();
+
+    QString toReport(const FeatureMapper &fmapper) const {
+        qreal totalRoots = 0;
+        foreach (const Scored &sc, _rootScore)
+            totalRoots += sc.score;
+        QVector<ListScoredListRuleID> sortedRulesByFeatureID = _rulesByFeatureID;
+        std::sort(sortedRulesByFeatureID.begin(), sortedRulesByFeatureID.end(), ExtensionsQtContainers::compareBySize<ListScoredListRuleID>);
+        QString result(QString("\ttotal rootScore:%1\n").arg(totalRoots));
+        for (int i=0; i < _size; ++i) {
+            result = result + QString("\t%1: %2\n").arg(fmapper.value(i)).arg(sortedRulesByFeatureID[i].size());
+        }
+        return result;
+    }
 
     /*!
      * \brief Adds rule to grammar
@@ -60,7 +74,7 @@ public:
     inline const QVector<Scored> &rootScore() const;
     inline const QVector<ScoredChomskyRuleRecord> &rulesByID() const;
     inline const QVector<ListScoredListRuleID> &rulesByFeatureID() const;
-    inline const QVector<QVector<ListScoredRuleID> > &rulesByRightIDsHash() const;
+    inline const QVector<QVector<ListRuleID> > &rulesByRightIDsHash() const;
 private:
     void resizeVectors(int sz);
     void resizeMatrix(int sz);
@@ -90,7 +104,7 @@ inline const QVector<ListScoredListRuleID> &CNFGrammar::rulesByFeatureID() const
 
 inline const QVector<Scored> &CNFGrammar::rootScore() const { return _rootScore;}
 
-inline const QVector<QVector<ListScoredRuleID> > &CNFGrammar::rulesByRightIDsHash() const { return _rulesByRightIDsHash;}
+inline const QVector<QVector<ListRuleID> > &CNFGrammar::rulesByRightIDsHash() const { return _rulesByRightIDsHash;}
 
 /// SERIALIZATION / DESERIALIZATION
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr);

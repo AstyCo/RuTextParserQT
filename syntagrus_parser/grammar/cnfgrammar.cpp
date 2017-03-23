@@ -109,8 +109,7 @@ void CNFGrammar::fillCache(const int &newID)
 {
     const ChomskyRuleRecord &rule = _ruleByID[newID].rule;
 
-    _rulesByRightIDsHash[rule.leftID()][rule.rightID()].append(
-                ScoredRuleID(newID));
+    _rulesByRightIDsHash[rule.leftID()][rule.rightID()].append(newID);
 }
 
 ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
@@ -131,11 +130,11 @@ ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
 
 ruleID CNFGrammar::find(const ChomskyRuleRecord &rule) const
 {
-    const ListScoredRuleID &rules = _rulesByRightIDsHash[rule.leftID()][rule.rightID()];
+    const ListRuleID &rules = _rulesByRightIDsHash[rule.leftID()][rule.rightID()];
 
-    foreach (const ScoredRuleID &id, rules) {
-        if (_ruleByID[id.id].rule._sourceFID == rule._sourceFID)
-            return id.id;
+    foreach (const ruleID &id, rules) {
+        if (_ruleByID[id].rule == rule)
+            return id;
     }
     // not found
     return -1;
