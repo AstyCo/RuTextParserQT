@@ -45,18 +45,19 @@ QDataStream &operator>>(QDataStream &ds, ScoredRuleID &s)
     return ds;
 }
 
-QDataStream &operator<<(QDataStream &ds, const ScoredListRuleID &s)
+QDataStream &operator<<(QDataStream &ds, const ScoredSetRuleID &s)
 {
     ds << s.score;
-    ds << s.list;
+    ds << s.set;
 
     return ds;
 }
 
-QDataStream &operator>>(QDataStream &ds, ScoredListRuleID &s)
+QDataStream &operator>>(QDataStream &ds, ScoredSetRuleID &s)
 {
     ds >> s.score;
-    ds >> s.list;
+    ds >> s.set;
 
     return ds;
 }
+

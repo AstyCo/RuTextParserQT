@@ -35,11 +35,15 @@ void TreeParser::parseTree(const TreeCorpora &treeCorpora)
     else
         _grammar = new CNFGrammar(treeCorpora.featureMapper().size());
 
-
+//    // starts building
+//    _grammar->startBuilding();
+    // building
     foreach(const SentenceInCorpora &sentence, treeCorpora.sentencesBySize())
         parseSentence(sentence,
                       treeCorpora.featureMapper(),
                       treeCorpora.linkMapper());
+//    // finish building
+//    _grammar->finishBuilding();
 }
 
 CNFGrammar *TreeParser::getGrammar()

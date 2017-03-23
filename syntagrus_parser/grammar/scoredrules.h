@@ -53,24 +53,34 @@ SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, ScoredRul
 
 typedef QList<ScoredRuleID> ListScoredRuleID;
 
+typedef QSet<ruleID> SetRuleID;
 typedef QList<ruleID> ListRuleID;
+
+struct ScoredSetRuleID : public Scored
+{
+    SetRuleID set;
+
+    ScoredSetRuleID(qreal score = 0) : Scored(score) {}
+    ScoredSetRuleID(const SetRuleID &ids, qreal score = 1) : Scored(score), set(ids) {}
+
+//    bool operator==(const ScoredSetRuleID &other) const { return set == other.set;}
+};
+
 struct ScoredListRuleID : public Scored
 {
     ListRuleID list;
 
-    ScoredListRuleID() : Scored() {}
-    ScoredListRuleID(const ListRuleID &ids) : Scored(1), list(ids) {}
+    ScoredListRuleID(qreal score = 0) : Scored(score) {}
+    ScoredListRuleID(const ListRuleID &ids, qreal score = 1) : Scored(score), list(ids) {}
 
+    bool operator==(const ScoredListRuleID &other) const { return list == other.list;}
 };
-inline bool operator<(const ScoredListRuleID &lhs, const ScoredListRuleID &rhs) {
-    return lhs.list < rhs.list;
-}
 
-SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator<<(QDataStream &ds, const ScoredListRuleID &s);
-SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, ScoredListRuleID &s);
-
+SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator<<(QDataStream &ds, const ScoredSetRuleID &s);
+SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, ScoredSetRuleID &s);
 
 typedef QList<ScoredListRuleID> ListScoredListRuleID;
+typedef QSet<ScoredSetRuleID> SetScoredSetRuleID;
 
 
 

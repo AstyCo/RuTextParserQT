@@ -40,7 +40,8 @@ SOURCES += \
     corpora_parsing/optimizedtreecorpora.cpp \
     corpora_parsing/optimizedsentence.cpp \
     corpora_parsing/optimizedword.cpp \
-    grammar/scoredrules.cpp
+    grammar/scoredrules.cpp \
+    grammar/simpleruletree.cpp
 
 HEADERS +=\
         syntagrus_parser_global.h \
@@ -60,7 +61,8 @@ HEADERS +=\
     grammar/chomskyrulerecord.h \
     grammar/rulerecord.h \
     grammar/scoredrules.h \
-    corpora_parsing/uniquevector.h
+    corpora_parsing/uniquevector.h \
+    grammar/simpleruletree.h
 
 unix {
     target.path = /usr/lib

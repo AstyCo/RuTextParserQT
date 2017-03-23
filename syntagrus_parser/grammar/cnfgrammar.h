@@ -4,6 +4,7 @@
 #include "syntagrus_parser_global.h"
 #include "internal/base-types.h"
 //#include "rutextparser_extensions.h"
+#include "simpleruletree.h"
 #include "rulerecord.h"
 #include "scoredrules.h"
 
@@ -19,21 +20,28 @@ class SYNTAGRUS_PARSERSHARED_EXPORT CNFGrammar
 
     QVector<Scored> _rootScore;  ///< [featureID]-><root score>
     QVector<ScoredChomskyRuleRecord> _ruleByID; ///< [ruleID]->RuleRecord
-    QVector<ListScoredListRuleID> _rulesByFeatureID;   ///< [featureID]->(ListOf(ListOf(<ruleID | featureID->X Y>), <number of occuriences>))
+
+    QVector<SimpleRuleTree> _rulesByFeatureID;   ///< [featureID]->(SetOf(SetOf(<ruleID | featureID->X Y>), <number of occuriences>))
+    QVector<SimpleRuleTree> _rulesByFeatureIDReverse;   ///< [featureID]->(SetOf(SetOf(<ruleID | featureID->X Y>), <number of occuriences>))
 
     // hash
     QVector<QVector<ListRuleID> > _rulesByRightIDsHash;     ///< [leftFeatureID][rightFeatureID]->ListOf(<ruleID | X->leftFeatureID rightFeatureID>)
+//    QVector<ListScoredListRuleID> *_plistRulesByFID;
 public:
     CNFGrammar();   ///< only for deserialization
     CNFGrammar(const featureID &featureCount);
     ~CNFGrammar();
 
+//    void startBuilding() { _plistRulesByFID = new QVector<ListScoredListRuleID>(_size);}
+//    void finishBuilding();
+
     QString toReport(const FeatureMapper &fmapper) const {
         qreal totalRoots = 0;
         foreach (const Scored &sc, _rootScore)
             totalRoots += sc.score;
-        QVector<ListScoredListRuleID> sortedRulesByFeatureID = _rulesByFeatureID;
-        std::sort(sortedRulesByFeatureID.begin(), sortedRulesByFeatureID.end(), ExtensionsQtContainers::compareBySize<ListScoredListRuleID>);
+
+        QVector<SimpleRuleTree> sortedRulesByFeatureID = _rulesByFeatureID;
+        std::sort(sortedRulesByFeatureID.begin(), sortedRulesByFeatureID.end(), ExtensionsQtContainers::compareBySize<SimpleRuleTree>);
         QString result(QString("\ttotal rootScore:%1\n").arg(totalRoots));
         for (int i=0; i < _size; ++i) {
             result = result + QString("\t%1: %2\n").arg(fmapper.value(i)).arg(sortedRulesByFeatureID[i].size());
@@ -73,7 +81,8 @@ public:
     inline int size() const;
     inline const QVector<Scored> &rootScore() const;
     inline const QVector<ScoredChomskyRuleRecord> &rulesByID() const;
-    inline const QVector<ListScoredListRuleID> &rulesByFeatureID() const;
+    inline const QVector<SimpleRuleTree> &rulesByFeatureID() const;
+    inline const QVector<SimpleRuleTree> &rulesByFeatureIDReverse() const;
     inline const QVector<QVector<ListRuleID> > &rulesByRightIDsHash() const;
 private:
     void resizeVectors(int sz);
@@ -82,9 +91,9 @@ private:
     void clearCache();
     void fillCache(const int &newID );
     ruleID insert(const ChomskyRuleRecord &rule);
-    ruleID find(const ChomskyRuleRecord &rule) const;
+    ListRuleID::const_iterator find(const ChomskyRuleRecord &rule) const;
     void insert(const featureID &srcRuleID, const ListRuleID &ids);
-    int find(const featureID &srcRuleID, const ListRuleID &ids) const;
+//    QSet::iterator find(const featureID &srcRuleID, const SetRuleID &ids);
 
     /*!
      * Uses for serialization
@@ -100,7 +109,9 @@ inline int CNFGrammar::size() const { return _ruleByID.size();}
 
 inline const QVector<ScoredChomskyRuleRecord> &CNFGrammar::rulesByID() const { return _ruleByID;}
 
-inline const QVector<ListScoredListRuleID> &CNFGrammar::rulesByFeatureID() const { return _rulesByFeatureID;}
+inline const QVector<SimpleRuleTree> &CNFGrammar::rulesByFeatureID() const { return _rulesByFeatureID;}
+
+inline const QVector<SimpleRuleTree> &CNFGrammar::rulesByFeatureIDReverse() const { return _rulesByFeatureIDReverse;}
 
 inline const QVector<Scored> &CNFGrammar::rootScore() const { return _rootScore;}
 

@@ -166,7 +166,7 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
         else {
             rn = QSharedPointer<RuleNode>(new RuleNode(*src));
             rn->insert(RuleLink(scoredRuleIDs.at(i), dep));
-            if (!grammarContainsRule(scoredRuleIDs.at(i), rn, grammar)) {
+            if (!grammarContainsRule(scoredRuleIDs.at(i), *rn, grammar)) {
                 qDebug() << "NOT CONTAINS";
                 rn->delta() += 1;
             }
@@ -194,12 +194,17 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
 
 bool CYKSyntacticalAnalyzer::grammarContainsRule(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
 {
-    const ListScoredListRuleID &rules = grammar.rulesByFeatureID()[fid];
-    const QList<RuleLink> &rnRules = rn.rules();
+    // CYK is linear, so we should check only for rn.rules from begining, or from ending (no need to check from middle)
+    // firstly, check for STRAIGHT
+    ListRuleID sorted;
+    for (int i=0; i<rn.rules().size(); ++i)
+        sorted.append(rn.rules().at(i).id);
 
-    for (int i=0; i<rnRules.size(); ++i) {
-
-    }
+    if (grammar.rulesByFeatureID()[fid].contains(sorted))
+        return true;
+    // then, check for BACKWARD
+    std::reverse(sorted.begin(), sorted.end());
+    return grammar.rulesByFeatureIDReverse()[fid].contains(sorted);
 }
 
 //featureID CYKSyntacticalAnalyzer::srcID(const CYKCellRecord &r, const CNFGrammar &grammar)

@@ -9,6 +9,7 @@
 
 
 CNFGrammar::CNFGrammar()
+    : _size(0)
 {
     initDumpFilename();
 }
@@ -26,15 +27,26 @@ CNFGrammar::~CNFGrammar()
     clear();
 }
 
+//void CNFGrammar::finishBuilding()
+//{
+//    Q_ASSERT(_plistRulesByFID != NULL);
+
+//    for (int i=0; i<_size; ++i)
+//        _rulesByFeatureID[i] = listScoredToSetScored(_plistRulesByFID->at(i));
+
+//    delete [] _plistRulesByFID;
+//    _plistRulesByFID = NULL;
+//}
+
 void CNFGrammar::append(const RuleRecord &rule)
 {
-    QList<ruleID> ruleIDs;
+    ListRuleID ruleIDs;
     foreach (const RuleDepend &depend, rule.depends()) {
         ruleIDs.append( insert(
                     ChomskyRuleRecord(depend.link, depend.terminal,
                                       rule.sourceRule(), depend.isRight)));
     }
-    std::sort(ruleIDs.begin(), ruleIDs.end());
+//    std::sort(ruleIDs.begin(), ruleIDs.end());
 
     insert(rule.sourceRule(), ruleIDs);
 }
@@ -53,6 +65,7 @@ void CNFGrammar::clear()
    _rootScore.clear();
     _ruleByID.clear();
     _rulesByFeatureID.clear();
+    _rulesByFeatureIDReverse.clear();
 }
 
 void CNFGrammar::setDumpFilename(const QString &path)
@@ -75,6 +88,8 @@ void CNFGrammar::resizeVectors(int sz)
     // init vectors
     _rootScore.resize(sz);
     _rulesByFeatureID.resize(sz);
+    _rulesByFeatureIDReverse.resize(sz);
+
     resizeMatrix(sz);
 }
 
@@ -114,10 +129,10 @@ void CNFGrammar::fillCache(const int &newID)
 
 ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
 {
-    ruleID foundID = find(rule);
-    if (foundID != -1) {
-        _ruleByID[foundID].increaseScore();
-        return foundID;
+    ListRuleID::const_iterator i (find(rule));
+    if (i != _rulesByRightIDsHash[rule.leftID()][rule.rightID()].constEnd()) {
+        _ruleByID[*i].increaseScore();
+        return *i;
     }
 
     ruleID newID = _ruleByID.size();
@@ -128,46 +143,57 @@ ruleID CNFGrammar::insert(const ChomskyRuleRecord &rule)
     return newID;
 }
 
-ruleID CNFGrammar::find(const ChomskyRuleRecord &rule) const
+ListRuleID::const_iterator CNFGrammar::find(const ChomskyRuleRecord &rule) const
 {
     const ListRuleID &rules = _rulesByRightIDsHash[rule.leftID()][rule.rightID()];
-
-    foreach (const ruleID &id, rules) {
-        if (_ruleByID[id].rule == rule)
-            return id;
+    ListRuleID::const_iterator i(rules.constBegin());
+    while (i!=rules.constEnd()) {
+        if (_ruleByID[*i].rule == rule)
+            return i;
+        ++i;
     }
-    // not found
-    return -1;
+
+    return rules.constEnd();
 }
 
 void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
 {
-    int innerIndex = find(srcRuleID, ids);
-    if (innerIndex != -1) {
-        _rulesByFeatureID[srcRuleID][innerIndex].increaseScore();
+    // fill rules STRAIGHT
+    ListRuleID sorted(ids);
+    {
+        std::sort(sorted.begin(), sorted.end());
+        SimpleRuleNode *node = _rulesByFeatureID[srcRuleID].node(sorted);
+        if (node) {
+            // increase score of existing rule
+            node->increaseScore();
+        }
+        else {
+            // insert new rule
+            _rulesByFeatureID[srcRuleID].insert(sorted);
+        }
     }
-    else {
-        // insert new rule
-        ExtensionsQtContainers::insert_sorted(_rulesByFeatureID[srcRuleID], ScoredListRuleID(ids));
+    // fill rules BACKWARD
+    {
+        std::reverse(sorted.begin(), sorted.end());
+        SimpleRuleNode *node = _rulesByFeatureIDReverse[srcRuleID].node(sorted);
+        if (node) {
+            // increase score of existing rule
+            node->increaseScore();
+        }
+        else {
+            // insert new rule
+            _rulesByFeatureIDReverse[srcRuleID].insert(sorted);
+        }
     }
 }
 
-int CNFGrammar::find(const featureID &srcRuleID, const ListRuleID &ids) const
-{
-    const ListScoredListRuleID &ruleList = _rulesByFeatureID[srcRuleID];
-    for (int i=0; i < ruleList.size(); ++i) {
-        if (ruleList[i].list == ids)
-            return i;
-    }
-    // not found
-    return -1;
-}
 
 QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr)
 {
     ds << gr._size;
     ds << gr._ruleByID;
     ds << gr._rulesByFeatureID;
+    ds << gr._rulesByFeatureIDReverse;
     ds << gr._rootScore;
 
     return ds;
@@ -182,6 +208,7 @@ QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
     ds >> gr._size;
     ds >> gr._ruleByID;
     ds >> gr._rulesByFeatureID;
+    ds >> gr._rulesByFeatureIDReverse;
     ds >> gr._rootScore;
 
     gr.resizeMatrix(gr._size);
