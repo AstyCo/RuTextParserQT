@@ -14,6 +14,20 @@ bool RuleLink::operator==(const RuleLink &other) const
 
 long RuleNode::callgrind_debug = 0;
 
+const RuleNode &RuleNode::operator=(const RuleNode &other)
+{
+    _delta = other._delta;
+    _rules = other._rules;
+
+    return *this;
+}
+
+RuleNode::RuleNode(const RuleNode &other)
+    : Scored(other.score), _delta(other._delta), _rules(other._rules)
+{
+    callgrind_debug++;
+}
+
 RuleNode::RuleNode(qreal scoreValue, quint8 delta)
     : Scored(scoreValue), _delta(delta)
 {
@@ -31,7 +45,7 @@ RuleNode::RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue,
 RuleNode::~RuleNode()
 {
     callgrind_debug--;
-    qDebug() << "callgrind_debug" << callgrind_debug;
+//    qDebug() << "callgrind_debug" << callgrind_debug;
 }
 
 bool RuleNode::insert(const RuleLink &link)

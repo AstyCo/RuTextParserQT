@@ -29,6 +29,8 @@ struct RuleNode : public Scored
     QList<RuleLink> _rules;
 public:
 
+    const RuleNode&operator=(const RuleNode &other);
+    RuleNode(const RuleNode &other);
     RuleNode(qreal scoreValue = 0, quint8 delta = 0);
     RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue = 0, quint8 delta = 0);
     ~RuleNode();

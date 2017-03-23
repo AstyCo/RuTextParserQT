@@ -353,9 +353,10 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
     lmapper.load();
     qDebug().noquote() << _grammarParser.getGrammar()->toReport(fmapper);
     CYKSyntacticalAnalyzer an(fmapper, lmapper);
-    return;
+//    return;
 
-    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()->sentencesBySize().find(6).value();
+    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()
+            ->sentencesBySize().find(30).value();
     Q_ASSERT(!sentence.skip());
     qDebug() << "sentence" << sentence.qDebugSentence().wordList()
              << '\n' << sentence.qDebugSentence().featList();

@@ -115,19 +115,19 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
             const QVector<ListRuleID> &rulesWithLeft(grammar.rulesByRightIDsHash()[l.key()]);
             CYKCellConstIterator r(rightCell.constBegin());
             while (r != rightCell.constEnd()) {
-//                qDebug() << QString("(%1,%2)(%3,%4)")
-//                            .arg(QString::number(i+p+1))
-//                            .arg(QString::number(j))
-//                            .arg(QString::number(i+h-p))
-//                            .arg(QString::number(j+h-p))
-//                          <<  "looking for rule between"<<_fmapper.value(l.key())
-//                         <<"and" <<_fmapper.value(r.key())
-//                        << QString("[%1]").arg(QString::number(rulesWithLeft[r.key()].size()));
-//                if (rulesWithLeft[r.key()].size() > 0) {
-//                    foreach (const ruleID &id, rulesWithLeft[r.key()]) {
-//                        qDebug() << grammar.rulesByID()[id].toString(_fmapper, _lmapper);
-//                    }
-//                }
+                qDebug() << QString("(%1,%2)(%3,%4)")
+                            .arg(QString::number(i+p+1))
+                            .arg(QString::number(j))
+                            .arg(QString::number(i+h-p))
+                            .arg(QString::number(j+h-p))
+                          <<  "looking for rule between"<<_fmapper.value(l.key())
+                         <<"and" <<_fmapper.value(r.key())
+                        << QString("[%1]").arg(QString::number(rulesWithLeft[r.key()].size()));
+                if (rulesWithLeft[r.key()].size() > 0) {
+                    foreach (const ruleID &id, rulesWithLeft[r.key()]) {
+                        qDebug() << grammar.rulesByID()[id].toString(_fmapper, _lmapper);
+                    }
+                }
                 addRecord(cell, l.value(), r.value(),
                           rulesWithLeft[r.key()], grammar);
                 r++;
@@ -166,19 +166,19 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
         else {
             rn = QSharedPointer<RuleNode>(new RuleNode(*src));
             rn->insert(RuleLink(scoredRuleIDs.at(i), dep));
-            if (!grammarContainsRule(scoredRuleIDs.at(i), *rn, grammar)) {
-                qDebug() << "NOT CONTAINS";
+            if (!grammarContainsRule(fid, *rn, grammar)) {
+//                qDebug() << "NOT CONTAINS";
                 rn->delta() += 1;
             }
         }
         if (rn->delta() > 0) {
-            static long kk = 0;
-            qDebug() << "NOT CORRECT RULE" << ++kk;
+//            static long kk = 0;
+//            qDebug() << "NOT CORRECT RULE" << ++kk;
             return;
         }
         else {
-            static long kk = 0;
-            qDebug() << "correct rule" << ++kk;
+//            static long kk = 0;
+//            qDebug() << "correct rule" << ++kk;
         }
         if (!cell.contains(fid, rn)) {
             cell.insert(fid, rn);
