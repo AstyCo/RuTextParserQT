@@ -32,9 +32,9 @@ private:
     void addRecord(CYKCell &cell,
                    const QSharedPointer<RuleNode> &l,
                    const QSharedPointer<RuleNode> &r,
-                   const ListRuleID &scoredRuleIDs,
-                   const QVector<ScoredChomskyRuleRecord> &rulesByID);
+                   const ListRuleID &scoredRuleIDs, const CNFGrammar &grammar);
 
+    bool grammarContainsRule(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const;
 };
 
 #endif // CYKANALYZER_H

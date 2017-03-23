@@ -129,7 +129,7 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
 //                    }
 //                }
                 addRecord(cell, l.value(), r.value(),
-                          rulesWithLeft[r.key()], grammar.rulesByID());
+                          rulesWithLeft[r.key()], grammar);
                 r++;
             }
             l++;
@@ -150,11 +150,11 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
                                        const QSharedPointer<RuleNode> &l,
                                        const QSharedPointer<RuleNode> &r,
                                        const ListRuleID &scoredRuleIDs,
-                                       const QVector<ScoredChomskyRuleRecord> &rulesByID)
+                                       const CNFGrammar &grammar)
 {
 
     for (int i=0; i < scoredRuleIDs.size(); ++i) {
-        const ScoredChomskyRuleRecord &ruleRecord = rulesByID[scoredRuleIDs.at(i)];
+        const ScoredChomskyRuleRecord &ruleRecord = grammar.rulesByID()[scoredRuleIDs.at(i)];
         const QSharedPointer<RuleNode> &src = (ruleRecord.rule._isRightRule ? l : r);
         const QSharedPointer<RuleNode> &dep = (ruleRecord.rule._isRightRule ? r : l);
         featureID fid = ruleRecord.rule._sourceFID;
@@ -164,17 +164,21 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
 //            cell.insert(fid, rn);
         }
         else {
-            rn = QSharedPointer<RuleNode>(new RuleNode(1));
-            rn->rules = src->rules;
-            ExtensionsQtContainers::insert_sorted(rn->rules, RuleLink(scoredRuleIDs.at(i), dep));
-//            rn->rules.append(RuleLink(scoredRuleIDs.at(i).id, dep));
-
-//            if (!cell.contains(fid, rn)) {
-//                cell.insert(fid, rn);
-//            }
-//            else {
-//                qDebug() << "cell contains" << fid;
-//            }
+            rn = QSharedPointer<RuleNode>(new RuleNode(*src));
+            rn->insert(RuleLink(scoredRuleIDs.at(i), dep));
+            if (!grammarContainsRule(scoredRuleIDs.at(i), rn, grammar)) {
+                qDebug() << "NOT CONTAINS";
+                rn->delta() += 1;
+            }
+        }
+        if (rn->delta() > 0) {
+            static long kk = 0;
+            qDebug() << "NOT CORRECT RULE" << ++kk;
+            return;
+        }
+        else {
+            static long kk = 0;
+            qDebug() << "correct rule" << ++kk;
         }
         if (!cell.contains(fid, rn)) {
             cell.insert(fid, rn);
@@ -184,6 +188,16 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
             i.value()->increaseScore();
 //            qDebug() << "cell contains" << fid;
         }
+
+    }
+}
+
+bool CYKSyntacticalAnalyzer::grammarContainsRule(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
+{
+    const ListScoredListRuleID &rules = grammar.rulesByFeatureID()[fid];
+    const QList<RuleLink> &rnRules = rn.rules();
+
+    for (int i=0; i<rnRules.size(); ++i) {
 
     }
 }

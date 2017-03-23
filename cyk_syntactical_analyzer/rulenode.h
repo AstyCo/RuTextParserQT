@@ -24,24 +24,34 @@ struct RuleLink
 
 struct RuleNode : public Scored
 {
-    QList<RuleLink> rules;
+    static long callgrind_debug;
+    quint8 _delta;
+    QList<RuleLink> _rules;
+public:
 
-    RuleNode(qreal scoreValue = 0);
-    RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue = 0);
+    RuleNode(qreal scoreValue = 0, quint8 delta = 0);
+    RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue = 0, quint8 delta = 0);
+    ~RuleNode();
+
+    quint8 &delta() { return _delta;}
+    const quint8 &delta() const { return _delta;}
+
+    const QList<RuleLink> &rules() const { return _rules;}
+    bool insert(const RuleLink &link);
 
 
-    bool isLeaf() const { return rules.isEmpty();}
+    bool isLeaf() const { return _rules.isEmpty();}
     bool operator==(const RuleNode &other) const {
-        if (rules.isEmpty() && other.rules.isEmpty())
+        if (_rules.isEmpty() && other._rules.isEmpty())
             return true;
-        return rules == other.rules;
+        return _rules == other._rules;
     }
 
     bool operator<(const RuleNode &other) const {
-        if (other.rules.isEmpty())
+        if (other._rules.isEmpty())
             return false;
 
-        return rules < other.rules;
+        return _rules < other._rules;
     }
 };
 
