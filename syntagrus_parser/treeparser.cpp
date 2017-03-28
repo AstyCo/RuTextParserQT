@@ -105,10 +105,10 @@ void TreeParser::parseNode(const RecordNode *node,
     if (!node->childNodes().isEmpty()) {
         RuleRecord rule(fid);
 
-        foreach (const RecordNode *child, node->childNodes()) {
-            linkID lid = lmapper.index(child->record()._link);
-            featureID childFid = fmapper.index(child->record()._feat);
-            rule.append(lid, childFid, node->record().before(child->record()));
+        for (int i=0; i < node->childNodes().size(); ++i) {
+            linkID lid = lmapper.index(node->childNodes().at(i)->record()._link);
+            featureID childFid = fmapper.index(node->childNodes().at(i)->record()._feat);
+            rule.append(lid, childFid, node->record().before(node->childNodes().at(i)->record()));
         }
         _grammar->append(rule);
     }

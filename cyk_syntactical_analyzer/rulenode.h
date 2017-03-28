@@ -1,6 +1,7 @@
 #ifndef RULENODE_H
 #define RULENODE_H
 
+#include "cyk_syntactical_analyzer_global.h"
 #include "syntagrus_parser/internal/base-types.h"
 #include "syntagrus_parser/grammar/scoredrules.h"
 
@@ -9,7 +10,7 @@
 
 struct RuleNode;
 
-struct RuleLink
+struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT RuleLink
 {
     ruleID id;
     QSharedPointer<RuleNode> node;
@@ -22,12 +23,18 @@ struct RuleLink
     bool operator>(const RuleLink &other) const { return !(*this < other);}
 };
 
-struct RuleNode : public Scored
+
+
+struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT RuleNode : public Scored
 {
-    static long callgrind_debug;
+//    static long callgrind_debug;
     quint8 _delta;
     QList<RuleLink> _rules;
 public:
+
+    QString toString(const QVector<ScoredChomskyRuleRecord> &ruleByID,
+                         const FeatureMapper &fmapper, const LinkMapper &lmapper,
+                         int tab = 0);
 
     const RuleNode&operator=(const RuleNode &other);
     RuleNode(const RuleNode &other);
@@ -39,7 +46,7 @@ public:
     const quint8 &delta() const { return _delta;}
 
     const QList<RuleLink> &rules() const { return _rules;}
-    bool insert(const RuleLink &link);
+    void append(const RuleLink &link);
 
 
     bool isLeaf() const { return _rules.isEmpty();}

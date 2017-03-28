@@ -283,6 +283,131 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
     return successful;
 }
 
+const FeatureMapper *_dirtyHack;
+const LinkMapper *_dirtyHack2;
+struct HelperCompare
+{
+    QString feat;
+    QString link;
+    bool isRight;
+    int index;
+};
+
+bool lessThan2(HelperCompare lhs, HelperCompare rhs)
+{
+    if (_dirtyHack->index(lhs.feat) < _dirtyHack->index(rhs.feat))
+        return true;
+    if (_dirtyHack->index(lhs.feat) > _dirtyHack->index(rhs.feat))
+        return false;
+    return _dirtyHack2->index(lhs.link) < _dirtyHack2->index(rhs.link);
+}
+bool lessThan(RecordNode *lhs, RecordNode *rhs)
+{
+    if (_dirtyHack->index(lhs->record()._feat)
+            < _dirtyHack->index(rhs->record()._feat))
+        return true;
+    if (_dirtyHack->index(lhs->record()._feat)
+            > _dirtyHack->index(rhs->record()._feat))
+        return false;
+    return _dirtyHack2->index(lhs->record()._link)
+            < _dirtyHack2->index(rhs->record()._link);
+}
+
+
+bool SynTagRusParserTest::checkEqual(RuleNode *ruleNode, RecordNode *recordNode,
+                                     const QVector<ScoredChomskyRuleRecord> &ruleByID,
+                                     const FeatureMapper &fmapper, const LinkMapper &lmapper)
+{
+    if (!ruleNode && !recordNode)
+        return true;
+    if (!ruleNode || !recordNode)
+        return false;
+
+    if (recordNode->childNodes().size() != ruleNode->rules().size())
+        return false;
+    if (ruleNode->rules().isEmpty()
+            && recordNode->childNodes().isEmpty())
+        return true;
+//    qDebug().noquote() << ruleNode->toString(ruleByID, fmapper, lmapper);
+    const RecordInCorpora &record = recordNode->record();
+    const ChomskyRuleRecord &ruleGrammar = ruleByID.at(ruleNode->rules().first().id).rule;
+    QString srcFeature = fmapper.value(ruleGrammar._sourceFID);
+    if (srcFeature != record._feat) {
+//        qDebug() << "!check feats" << srcFeature << record._feat;
+        return false;
+    }
+    const QList<RecordNode *> &sortedChilds = recordNode->childNodes();
+//    _dirtyHack = &fmapper;
+//    _dirtyHack2 = &lmapper;
+
+//    std::sort(sortedChilds.begin(), sortedChilds.end(), lessThan);
+    int j =0;
+    for (; j < ruleNode->rules().size(); ++j) {
+        const RuleLink &childLink = ruleNode->rules().at(j);
+        HelperCompare helper;
+        const ChomskyRuleRecord &rule = ruleByID.at(childLink.id).rule;
+
+        if (!rule._isRightRule)
+            break;
+    }
+    // j == first left rule
+    QList<HelperCompare> temp;
+    for (int i=ruleNode->rules().size() - 1; i >= j ; --i) {
+        const RuleLink &childLink = ruleNode->rules().at(i);
+        HelperCompare helper;
+        const ChomskyRuleRecord &rule = ruleByID.at(childLink.id).rule;
+
+        helper.isRight = rule._isRightRule;
+        helper.link = lmapper.value(rule._linkID);
+        helper.feat = fmapper.value(rule._dependFID);
+        helper.index = i;
+
+        temp.append(helper);
+    }
+
+    for (int i=0; i < j; ++i) {
+        const RuleLink &childLink = ruleNode->rules().at(i);
+        HelperCompare helper;
+        const ChomskyRuleRecord &rule = ruleByID.at(childLink.id).rule;
+
+        helper.isRight = rule._isRightRule;
+        helper.link = lmapper.value(rule._linkID);
+        helper.feat = fmapper.value(rule._dependFID);
+        helper.index = i;
+
+        temp.append(helper);
+    }
+
+
+
+//    std::sort(temp.begin(), temp.end(), lessThan2);
+
+
+    for (int i=0; i < sortedChilds.size(); ++i) {
+        const RecordInCorpora &childRecord = sortedChilds.at(i)->record();
+
+        if (temp.at(i).isRight != recordNode->record().before(childRecord)) {
+            return false;
+        }
+
+        if (temp.at(i).link != childRecord._link) {
+//            qDebug() << "links not equal" << temp.at(i).link
+//                     << "and" << childRecord._link;
+            return false;
+        }
+        if (temp.at(i).feat != childRecord._feat){
+            qDebug() << "feats not equal" << temp.at(i).feat
+                     << "and" << childRecord._feat;
+            return false;
+        }
+        if (!checkEqual(ruleNode->rules().at(temp.at(i).index).node.data(), sortedChilds.at(i),ruleByID, fmapper, lmapper))
+            return false;
+//        logStream << ruleToString(ruleNode->rules().at(temp.at(i).index).node.data(), ruleByID, fmapper, lmapper)
+    }
+    return true;
+}
+
+
 void SynTagRusParserTest::deserializeTreeCorpora()
 {
     static bool deserialized = false;
@@ -344,9 +469,17 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
-    parsingTest();
+//    parsingTest();
 //    deserializeTreeCorpora();
+    SynTagRusParser parser;
+    parser.deserializeTreeCorpora();
+//    parser.parse("../../rutextparserqt/test");
+//    deserializeTreeCorpora();
+    qDebug() << "sent count:" << parser.getTreeCorpora()->sentencesBySize().size();
     deserializeGrammar();
+    CNFGrammar *grammar=_grammarParser.getGrammar();
+    qDebug().noquote() << grammar->toReport(parser.getTreeCorpora()->featureMapper());
+    grammar->rulesByFeatureID().size();
     FeatureMapper fmapper;
     LinkMapper lmapper;
     fmapper.load();
@@ -354,22 +487,47 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
     qDebug().noquote() << _grammarParser.getGrammar()->toReport(fmapper);
     CYKSyntacticalAnalyzer an(fmapper, lmapper);
 //    return;
+    const int sz = 5;
+//    QMultiHash<int, SentenceInCorpora> sentences(_syntagrusParser.getTreeCorpora()->sentencesBySize());
+    QMultiHash<int, SentenceInCorpora> sentences(parser.getTreeCorpora()->sentencesBySize());
+    QMultiHash<int, SentenceInCorpora>::const_iterator it(sentences.constFind(sz));
+    while(it!=sentences.constEnd() && it.key() == sz) {
+        SentenceInCorpora sentence = it.value();
+        qDebug() << tr("sentence (%1, %2)").arg(sentence.getFilename()).arg(sentence.getId())
+                 << sentence.qDebugSentence().wordList()
+                 << '\n' << sentence.qDebugSentence().featList();
+        if (!sentence.isProjective()) {
+            qDebug() << "NOT PROJECTIVE";
+            it++;
+            continue;
+        }
 
-    SentenceInCorpora sentence = _syntagrusParser.getTreeCorpora()
-            ->sentencesBySize().find(30).value();
-    Q_ASSERT(!sentence.skip());
-    qDebug() << "sentence" << sentence.qDebugSentence().wordList()
-             << '\n' << sentence.qDebugSentence().featList();
+        qDebug() << "starting analyzing";
 
-    qDebug() << "starting analyzing";
+        QList<QSharedPointer<RuleNode> > analyzedSentences = an.analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
 
-    QList<QSharedPointer<RuleNode> > analyzedSentences = an.analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
-
-    QVERIFY2(!analyzedSentences.isEmpty(), "not found");
-    qDebug() << "analyzedSentences";
-    qDebug() << "analyzedSz" << analyzedSentences.size();
-//    foreach (const QStringList &sl, analyzedSentences)
-//        qDebug() << "\tSentence:" << sl;
+        int found = 0;
+        foreach (QSharedPointer<RuleNode> rn, analyzedSentences) {
+            bool founded = false;
+            if (checkEqual(rn.data(), sentence.root(), _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)) {
+                found++;
+                founded = true;
+            }
+            logStream << (founded ? "FOUNDED:\n" : "\n") <<rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper) << endl;
+        }
+        if (found)
+            qDebug() << "NICE, FOUND" << found;
+        else
+            qDebug() << "SAD, NOT FOUND";
+        qDebug() << "analyzedSz" << analyzedSentences.size();
+        Q_ASSERT(found == 1);
+        QVERIFY2(!analyzedSentences.isEmpty(), "not found");
+//        qDebug() << "analyzedSentences";
+        //    foreach (const QStringList &sl, analyzedSentences)
+        //        qDebug() << "\tSentence:" << sl;
+        it++;
+    }
+    qDebug() << "all sentences with sz" << sz << "analyzed";
 }
 
 void SynTagRusParserTest::withoutSerialization()
@@ -394,7 +552,7 @@ void SynTagRusParserTest::wholeTest()
     qDebug() << "Size of TreeCorpora after deserialization" << _syntagrusParser.getTreeCorpora()->size();
     qDebug() << "Grammar size after serialization" << _grammarParser.getGrammar()->size();
 
-//    testCYKSyntacticalAnalyzer();
+    testCYKSyntacticalAnalyzer();
 }
 
 

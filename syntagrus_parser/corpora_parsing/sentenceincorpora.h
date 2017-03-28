@@ -19,6 +19,8 @@
 class SYNTAGRUS_PARSERSHARED_EXPORT SentenceInCorpora
 {
     QString _error;
+    QString filename;
+    int id;
     SentenceInfo _qDebugSentence;
     bool _skip;
     RecordNode *_root;
@@ -34,6 +36,7 @@ public:
     void updateSentence();
 
     RecordNode *nodeById(int id) const;
+    bool isProjective() const { return _root->isProjective();}
 
     const SentenceInfo &qDebugSentence() const;
     int size() const;
@@ -43,6 +46,13 @@ public:
 
     friend QDataStream &operator<<(QDataStream &ds, const SentenceInCorpora &s);
     friend QDataStream &operator>>(QDataStream &ds, SentenceInCorpora &s);
+
+    void setFilename(const QString &value);
+
+    QString getFilename() const;
+
+    int getId() const;
+    void setId(int value);
 
 private:
     void fillSentenceInfo(RecordNode * node = NULL);

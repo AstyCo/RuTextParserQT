@@ -43,7 +43,7 @@ public:
 
 private:
     void parseXml(const QString &path);
-    SentenceInCorpora parseSentence(const QDomElement &sentenceElement);
+    SentenceInCorpora parseSentence(const QDomElement &sentenceElement, const QString &filename, const int &id);
     void addByDom(SentenceInCorpora *sentence, int dom, QMultiMap<int, RecordInCorpora> &idToRecord);
 };
 

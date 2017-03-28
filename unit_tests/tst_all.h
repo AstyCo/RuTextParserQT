@@ -40,6 +40,9 @@ public:
 private:
     bool morphClientTestSentence(const OptimizedSentence &sentence, const int &inn);
     bool morphClientTestWord(const OptimizedWord &word, const int &inn);
+    bool checkEqual(RuleNode *ruleNode, RecordNode *recordNode,
+                    const QVector<ScoredChomskyRuleRecord> &ruleByID,
+                    const FeatureMapper &fmapper, const LinkMapper &lmapper);
 
 private:
     void deserializeTreeCorpora();
@@ -50,15 +53,15 @@ private:
 
     void withoutSerialization();
     void test();
+    void simpleTestMorphClient();
 
     void parsingTest();
     void dawgTest();
     void dawgLoadTest();
 
-    void simpleTestMorphClient();
-    void testMorphClient();
     void grammarTest();
     void wholeTest();
+    void testMorphClient();
 private Q_SLOTS:
     void testCYKSyntacticalAnalyzer();
 };

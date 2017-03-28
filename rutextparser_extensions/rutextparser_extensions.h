@@ -5,6 +5,7 @@
 
 #include <QFile>
 #include <QDataStream>
+#include <QTextStream>
 
 RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString );
 RUTEXTPARSER_EXTENSIONSSHARED_EXPORT const char *toWarning(const QString &templateString,
@@ -27,6 +28,33 @@ RUTEXTPARSER_EXTENSIONSSHARED_EXPORT void printWarning(const QString &templateSt
                                                        const QString &arg1,
                                                        const QString &arg2,
                                                        const QString &arg3 );
+
+namespace ExtensionsLogs {
+class RUTEXTPARSER_EXTENSIONSSHARED_EXPORT LogStream : public QTextStream
+{
+    QFile file;
+
+    bool _success;
+public:
+    explicit LogStream(const QString &fname);
+
+    friend class Logs;
+};
+
+class RUTEXTPARSER_EXTENSIONSSHARED_EXPORT Logs
+{
+    QMap<QString, LogStream *> _registeredLogStreams;
+public:
+    static bool registerLogStream(const QString &filename);
+    static LogStream *log(const QString &filename) { return getInstance()->_registeredLogStreams.value(filename, NULL);}
+    static Logs *getInstance();
+
+private:
+    Logs() {}
+    Q_DISABLE_COPY(Logs);
+};
+
+}
 
 namespace ExtensionsQtContainers {
 

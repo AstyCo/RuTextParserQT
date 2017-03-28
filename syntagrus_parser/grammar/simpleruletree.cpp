@@ -9,10 +9,20 @@ SimpleRuleTree::SimpleRuleTree()
 void SimpleRuleTree::insert(const QList<ruleID> &list)
 {
     SimpleRuleNode *node = &_root;
-    for (int i=0; i < list.size(); ++i) {
+    // all but last
+    for (int i=0; i < list.size() - 1; ++i) {
         if (!node->node.contains(list.at(i)))
-            node->node.insert(list.at(i), SimpleRuleNode((i==list.size()-1 ? 1 : 0)));
+            node->node.insert(list.at(i), SimpleRuleNode(0));
         node = &node->node[list.at(i)];
+    }
+    if (!node)
+        Q_ASSERT(false);
+    // last
+    {
+        if (!node->node.contains(list.last()))
+            node->node.insert(list.last(), SimpleRuleNode(1));
+        else
+            node->node[list.last()].increaseScore();
     }
 }
 

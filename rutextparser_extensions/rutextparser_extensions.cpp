@@ -40,3 +40,34 @@ void printWarning(const QString &templateString, const QString &arg1, const QStr
 {
     qWarning(toWarning(templateString, arg1, arg2, arg3));
 }
+
+bool ExtensionsLogs::Logs::registerLogStream(const QString &filename) {
+    if (getInstance()->_registeredLogStreams.contains(filename))
+        return true;
+
+    LogStream *log = new LogStream(filename);
+    if (!log->_success) {
+        delete log;
+        return false;
+    }
+    getInstance()->_registeredLogStreams.insert(filename, log);
+    return true;
+}
+
+ExtensionsLogs::Logs *ExtensionsLogs::Logs::getInstance() {
+    static Logs log;
+    return &log;
+}
+
+ExtensionsLogs::LogStream::LogStream(const QString &fname)
+    : file(fname)
+{
+
+    if (!file.open(QFile::WriteOnly)) {
+        _success = false;
+        return;
+    }
+
+    setDevice(&file);
+    _success = true;
+}

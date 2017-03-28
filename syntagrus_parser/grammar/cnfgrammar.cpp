@@ -48,7 +48,8 @@ void CNFGrammar::append(const RuleRecord &rule)
     }
 //    std::sort(ruleIDs.begin(), ruleIDs.end());
 
-    insert(rule.sourceRule(), ruleIDs);
+    ListRuleID cykFormed = produceSequenceForCYK(ruleIDs);
+    insert(rule.sourceRule(), cykFormed);
 }
 
 void CNFGrammar::addRoot(const featureID &fid)
@@ -158,33 +159,90 @@ ListRuleID::const_iterator CNFGrammar::find(const ChomskyRuleRecord &rule) const
 
 void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
 {
-    // fill rules STRAIGHT
-    ListRuleID sorted(ids);
-    {
-        std::sort(sorted.begin(), sorted.end());
-        SimpleRuleNode *node = _rulesByFeatureID[srcRuleID].node(sorted);
-        if (node) {
-            // increase score of existing rule
-            node->increaseScore();
-        }
-        else {
-            // insert new rule
-            _rulesByFeatureID[srcRuleID].insert(sorted);
-        }
+    if (ids.isEmpty())
+        Q_ASSERT(false);
+    // Simple insert
+    SimpleRuleNode *node = _rulesByFeatureID[srcRuleID].node(ids);
+    if (node) {
+        // increase score of existing rule
+        node->increaseScore();
     }
-    // fill rules BACKWARD
-    {
-        std::reverse(sorted.begin(), sorted.end());
-        SimpleRuleNode *node = _rulesByFeatureIDReverse[srcRuleID].node(sorted);
-        if (node) {
-            // increase score of existing rule
-            node->increaseScore();
-        }
-        else {
-            // insert new rule
-            _rulesByFeatureIDReverse[srcRuleID].insert(sorted);
-        }
+    else {
+        // insert new rule
+        _rulesByFeatureID[srcRuleID].insert(ids);
     }
+
+//    // fill rules STRAIGHT
+//    ListRuleID sorted(ids);
+//    {
+//        std::sort(sorted.begin(), sorted.end());
+//        SimpleRuleNode *node = _rulesByFeatureID[srcRuleID].node(sorted);
+//        if (node) {
+//            // increase score of existing rule
+//            node->increaseScore();
+//        }
+//        else {
+//            // insert new rule
+//            _rulesByFeatureID[srcRuleID].insert(sorted);
+//        }
+//    }
+//    // fill rules BACKWARD
+//    {
+//        std::reverse(sorted.begin(), sorted.end());
+//        SimpleRuleNode *node = _rulesByFeatureIDReverse[srcRuleID].node(sorted);
+//        if (node) {
+//            // increase score of existing rule
+//            node->increaseScore();
+//        }
+//        else {
+//            // insert new rule
+//            _rulesByFeatureIDReverse[srcRuleID].insert(sorted);
+//        }
+    //    }
+}
+
+ListRuleID CNFGrammar::produceSequenceForCYK(const ListRuleID &ids) const
+{
+    ListRuleID result;
+    // find first right rule
+    int i = 0;
+    for (;i<ids.size(); ++i) {
+        if (_ruleByID[ids.at(i)].rule._isRightRule)
+            break;
+    }
+    if (i < ids.size()) {
+        // add right rules
+        for (int j=i;j<ids.size(); ++j)
+            result.append(ids.at(j));
+    }
+    if (i > 0) {
+        // add left rules (reverted)
+        for (int j=i-1; j >= 0; --j)
+            result.append(ids.at(j));
+    }
+    return result;
+}
+
+ListRuleID CNFGrammar::fromCYK(const ListRuleID &ids) const
+{
+    ListRuleID result;
+    // find first left rule
+    int i = 0;
+    for (;i<ids.size(); ++i) {
+        if (!_ruleByID[ids.at(i)].rule._isRightRule)
+            break;
+    }
+    if (i < ids.size()) {
+        // add left rules (reverted)
+        for (int j=ids.size() - 1;j >= i; --j)
+            result.append(ids.at(j));
+    }
+    if (i > 0) {
+        // add right rules
+        for (int j=0; j < i; ++j)
+            result.append(ids.at(j));
+    }
+    return result;
 }
 
 

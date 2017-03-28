@@ -1,12 +1,13 @@
 #ifndef RECORDNODE_H
 #define RECORDNODE_H
 
+#include "syntagrus_parser_global.h"
 #include "recordincorpora.h"
 
 #include <QList>
 #include <QDataStream>
 
-struct RecordNode
+struct SYNTAGRUS_PARSERSHARED_EXPORT RecordNode
 {
     RecordInCorpora _record;
     RecordNode *_parent;
@@ -25,6 +26,7 @@ public:
     const QList<RecordNode *> &childNodes() const;
 
     void append(RecordNode *node);
+    bool isProjective() const;
 
     int size() const;
     friend QDataStream &operator<<(QDataStream &ds, const RecordNode &r);

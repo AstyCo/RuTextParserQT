@@ -38,7 +38,8 @@ struct ChomskyRuleRecord
                 % (_isRightRule ? QString("\'%1\'+\'%2\'")
                                 : QString("\'%2\'+\'%1\'"))
                 .arg(fmapper.value(_sourceFID))
-                .arg(fmapper.value(_dependFID));
+                .arg(fmapper.value(_dependFID))
+                % QString("(%1)").arg((_isRightRule ? "R" : "L"));
     }
 };
 

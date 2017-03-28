@@ -110,7 +110,7 @@ void SynTagRusParser::parseXml(const QString &path)
         while (!sentenceElem.isNull()) {
             _debug = path + ':' + sentenceElem.attribute("ID");
 
-            SentenceInCorpora sentence = parseSentence(sentenceElem);
+            SentenceInCorpora sentence = parseSentence(sentenceElem, path, sentenceElem.attribute("ID").toInt());
             if (sentence.isValid()) {
                 textItem.append(sentence);
             }
@@ -128,9 +128,11 @@ void SynTagRusParser::parseXml(const QString &path)
     }
 }
 
-SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElement)
+SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElement, const QString &filename, const int &id)
 {
     SentenceInCorpora resultSentence;
+    resultSentence.setFilename(filename);
+    resultSentence.setId(id);
 
     QMultiMap<int, RecordInCorpora > domToRecord;
 
@@ -188,11 +190,17 @@ SentenceInCorpora SynTagRusParser::parseSentence(const QDomElement &sentenceElem
     return resultSentence;
 }
 
+bool sortByID(RecordNode *lhs, RecordNode *rhs)
+{
+    return lhs->record()._id < rhs->record()._id;
+}
+
 void SynTagRusParser::addByDom(SentenceInCorpora *sentence, int dom, QMultiMap<int, RecordInCorpora> &domToRecord)
 {
     int countOfRoot = 0;
     QMultiMap<int, RecordInCorpora>::const_iterator i = domToRecord.constFind( dom );
 //    int count = 0;
+    RecordNode *node = NULL;
     while(i != domToRecord.constEnd() && i.key() == dom) {
 //        qDebug() << "count" << ++count;
 //        qDebug() << QString("dom[%1] word[%2] itsDom(%3)")
@@ -209,7 +217,7 @@ void SynTagRusParser::addByDom(SentenceInCorpora *sentence, int dom, QMultiMap<i
             }
         }
         else {      // insert to node with nodeID
-            RecordNode *node = sentence->nodeById(dom);
+            node = sentence->nodeById(dom);
             if (!node) {
                 sentence->setError(QString("failed to find node by ID %1").arg(_debug));
                 return;
@@ -223,4 +231,6 @@ void SynTagRusParser::addByDom(SentenceInCorpora *sentence, int dom, QMultiMap<i
 
         ++i;
     }
+    if (node) // sort by id
+        std::sort(node->childNodes().begin(), node->childNodes().end(), sortByID);
 }

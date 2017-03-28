@@ -18,7 +18,6 @@ class CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT CYKSyntacticalAnalyzer
 {
     FeatureMapper _fmapper;
     LinkMapper _lmapper;
-
 public:
     CYKSyntacticalAnalyzer(const QString &fmapper = QString(), const QString &lmapper = QString());   ///< for deserialization
     CYKSyntacticalAnalyzer(const FeatureMapper &fm, const LinkMapper &lm);
@@ -27,6 +26,7 @@ public:
     QList<QSharedPointer<RuleNode> > analyze(const QStringList &v, const CNFGrammar &grammar);
 
 private:
+//    ListRuleID produceCYKSequence(const RuleNode &rn, const CNFGrammar &grammar);
     void fillLastRow(const AmbigiousStringVector &fv, CYKMatrix &matrix);
     void calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar);
     void addRecord(CYKCell &cell,
@@ -35,6 +35,7 @@ private:
                    const ListRuleID &scoredRuleIDs, const CNFGrammar &grammar);
 
     bool grammarContainsRule(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const;
+    const SimpleRuleNode *grammarFinalScore(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const;
 };
 
 #endif // CYKANALYZER_H

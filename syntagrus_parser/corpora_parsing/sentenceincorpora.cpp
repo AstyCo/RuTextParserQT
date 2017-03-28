@@ -80,6 +80,26 @@ void SentenceInCorpora::fillSentenceInfo(RecordNode *node)
 
 
 
+void SentenceInCorpora::setFilename(const QString &value)
+{
+    filename = value;
+}
+
+QString SentenceInCorpora::getFilename() const
+{
+    return filename;
+}
+
+int SentenceInCorpora::getId() const
+{
+    return id;
+}
+
+void SentenceInCorpora::setId(int value)
+{
+    id = value;
+}
+
 SentenceInCorpora::SentenceInCorpora(RecordNode *rootRecord)
     : _skip(false), _root(rootRecord)
 {
@@ -89,6 +109,8 @@ SentenceInCorpora::SentenceInCorpora(RecordNode *rootRecord)
 QDataStream &operator<<(QDataStream &ds, const SentenceInCorpora &s)
 {
     ds << s._error;
+    ds << s.filename;
+    ds << s.id;
     ds << s._qDebugSentence;
     ds << s._skip;
 
@@ -105,6 +127,8 @@ QDataStream &operator<<(QDataStream &ds, const SentenceInCorpora &s)
 QDataStream &operator>>(QDataStream &ds, SentenceInCorpora &s)
 {
     ds >> s._error;
+    ds >> s.filename;
+    ds >> s.id;
     ds >> s._qDebugSentence;
     ds >> s._skip;
 

@@ -36,16 +36,26 @@ public:
 //    void finishBuilding();
 
     QString toReport(const FeatureMapper &fmapper) const {
-        qreal totalRoots = 0;
-        foreach (const Scored &sc, _rootScore)
-            totalRoots += sc.score;
+//        qreal totalRoots = 0;
+//        foreach (const Scored &sc, _rootScore)
+//            totalRoots += sc.score;
 
         QVector<SimpleRuleTree> sortedRulesByFeatureID = _rulesByFeatureID;
         std::sort(sortedRulesByFeatureID.begin(), sortedRulesByFeatureID.end(), ExtensionsQtContainers::compareBySize<SimpleRuleTree>);
-        QString result(QString("\ttotal rootScore:%1\n").arg(totalRoots));
+//        QString result(QString("\ttotal top rules:%1\n").arg(totalRoots));
+//        for (int i=0; i < _size; ++i) {
+//            result = result + QString("\t%1: %2\n").arg(fmapper.value(i)).arg(sortedRulesByFeatureID[i].size());
+//        }
+
+        qreal totalTopRules = 0;
+        foreach (const SimpleRuleTree &tree, _rulesByFeatureID)
+            totalTopRules += tree.size();
+
+        QString result(QString("\ttotal top rules:%1\n").arg(totalTopRules));
         for (int i=0; i < _size; ++i) {
-            result = result + QString("\t%1: %2\n").arg(fmapper.value(i)).arg(sortedRulesByFeatureID[i].size());
+              result = result + QString("\t%1: %2\n").arg(fmapper.value(i)).arg(sortedRulesByFeatureID[i].size());
         }
+
         return result;
     }
 
@@ -84,6 +94,8 @@ public:
     inline const QVector<SimpleRuleTree> &rulesByFeatureID() const;
     inline const QVector<SimpleRuleTree> &rulesByFeatureIDReverse() const;
     inline const QVector<QVector<ListRuleID> > &rulesByRightIDsHash() const;
+    ListRuleID produceSequenceForCYK(const ListRuleID &ids) const;
+    ListRuleID fromCYK(const ListRuleID &ids) const;
 private:
     void resizeVectors(int sz);
     void resizeMatrix(int sz);
@@ -100,6 +112,8 @@ private:
      */
     friend QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr);
     friend QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr);
+
+    Q_DISABLE_COPY(CNFGrammar);
 };
 
 /// INLINE FUNCTIONS

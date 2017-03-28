@@ -1,5 +1,7 @@
 #include "recordnode.h"
 
+#include <QDebug>
+
 RecordNode::RecordNode(const RecordInCorpora &initRecord,
                        RecordNode *parentNode)
     : _record(initRecord), _parent(parentNode)
@@ -43,6 +45,40 @@ void RecordNode::append(RecordNode *node)
     node->setParent(this);
 
     _childNodes.append(node);
+}
+
+bool RecordNode::isProjective() const
+{
+    if (childNodes().isEmpty())
+        return true;
+
+    // init ids
+    QList<int> ids;
+    bool rootIns = false;
+    for (int i=0; i < _childNodes.size(); ++i) {
+        const int &childId = _childNodes.at(i)->record()._id;
+        if (!rootIns && childId > _record._id) {
+            ids.append(_record._id);
+            rootIns = true;
+        }
+        ids.append(childId);
+    }
+    if (!rootIns)
+        ids.append(_record._id);
+    qDebug() << "ids" << ids;
+
+    // check for projective
+    int last = ids.first();
+    for (int i=1; i<ids.size(); ++i) {
+        if (ids.at(i) - last != 1)
+            return false;
+        last = ids.at(i);
+    }
+    // recursive check too
+    foreach (const RecordNode *child, _childNodes)
+        if (!child->isProjective())
+            return false;
+    return true;
 }
 
 int RecordNode::size() const
