@@ -58,6 +58,15 @@ private:
 
 namespace ExtensionsQtContainers {
 
+template <typename T1, typename T2>
+inline bool compareByFirst(const QPair<T1,T2> &lhs, const QPair<T1,T2> &rhs) {
+    return lhs.first < rhs.first;
+}
+
+template <typename T1, typename T2>
+inline bool compareBySecond(const QPair<T1,T2> &lhs, const QPair<T1,T2> &rhs) {
+    return lhs.second < rhs.second;
+}
 
 template <typename T>
 inline bool compareBySize(const T &lhs, const T &rhs) {

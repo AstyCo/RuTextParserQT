@@ -6,7 +6,7 @@ SimpleRuleTree::SimpleRuleTree()
 {
 }
 
-void SimpleRuleTree::insert(const QList<ruleID> &list)
+void SimpleRuleTree::insert(const QList<ruleID> &list, bool rootRule)
 {
     SimpleRuleNode *node = &_root;
     // all but last
@@ -20,9 +20,12 @@ void SimpleRuleTree::insert(const QList<ruleID> &list)
     // last
     {
         if (!node->node.contains(list.last()))
-            node->node.insert(list.last(), SimpleRuleNode(1));
-        else
+            node->node.insert(list.last(), SimpleRuleNode(1, (rootRule ? 1 : 0)));
+        else {
             node->node[list.last()].increaseScore();
+            if (rootRule)
+                node->node[list.last()].rootScore.increaseScore();
+        }
     }
 }
 
@@ -55,17 +58,37 @@ SimpleRuleNode *SimpleRuleTree::node(const QList<ruleID> &list)
     return node;
 }
 
-int SimpleRuleTree::size() const
+int SimpleRuleTree::totalScore() const
 {
-    return _root.size();
+    return _root.totalScore();
 }
 
-int SimpleRuleNode::size() const
+int SimpleRuleTree::totalRootScore() const
 {
-    int result = (score>0 ? 1 : 0);
+    return _root.totalRoortScore();
+}
+
+int SimpleRuleNode::totalScore() const
+{
+    int result = score;
     foreach (const SimpleRuleNode &childNode, node)
-        result += childNode.size();
+        result += childNode.totalScore();
     return result;
+}
+
+int SimpleRuleNode::totalRoortScore() const
+{
+    int result = rootScore.score;
+    foreach (const SimpleRuleNode &childNode, node)
+        result += childNode.totalRoortScore();
+    return result;
+}
+
+void SimpleRuleNode::clear()
+{
+    score = 0;
+    rootScore.score = 0;
+    node.clear();
 }
 
 QDataStream &operator<<(QDataStream &ds, const SimpleRuleTree &tree)
@@ -85,6 +108,7 @@ QDataStream &operator>>(QDataStream &ds, SimpleRuleTree &tree)
 QDataStream &operator<<(QDataStream &ds, const SimpleRuleNode &n)
 {
     ds << n.score;
+    ds << n.rootScore;
     ds << n.node;
 
     return ds;
@@ -93,6 +117,7 @@ QDataStream &operator<<(QDataStream &ds, const SimpleRuleNode &n)
 QDataStream &operator>>(QDataStream &ds, SimpleRuleNode &n)
 {
     ds >> n.score;
+    ds >> n.rootScore;
     ds >> n.node;
 
     return ds;

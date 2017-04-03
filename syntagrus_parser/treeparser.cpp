@@ -96,28 +96,7 @@ void TreeParser::parseNode(const RecordNode *node,
         return;
     }
 
-    featureID fid = fmapper.index(node->record()._feat);
-    if (node->record()._dom == -1) {
-        // root rule
-        _grammar->addRoot(fid);
-    }
-
-    if (!node->childNodes().isEmpty()) {
-        RuleRecord rule(fid);
-
-        for (int i=0; i < node->childNodes().size(); ++i) {
-            linkID lid = lmapper.index(node->childNodes().at(i)->record()._link);
-            featureID childFid = fmapper.index(node->childNodes().at(i)->record()._feat);
-            rule.append(lid, childFid, node->record().before(node->childNodes().at(i)->record()));
-        }
-        _grammar->append(rule);
-    }
-
-
-    foreach (const RecordNode *child, node->childNodes()) {
-        // also, parse child
-        parseNode(child, fmapper, lmapper);
-    }
+    _grammar->append(fmapper, lmapper, node, -1);
 }
 
 

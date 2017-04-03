@@ -192,21 +192,41 @@ void SynTagRusParserTest::testMorphClient()
 
 }
 
-bool SynTagRusParserTest::morphClientTestSentence(const OptimizedSentence &opt, const int &inn)
+SynTagRusParserTest::MorphStates SynTagRusParserTest::morphClientTestSentence(const OptimizedSentence &opt, const int &inn)
 {
     static long failedCount = 0;
+    static long skippedCount = 0;
     static long suc = 0;
     bool failed = false;
+    bool skipped = false;
     for (int i=0; i<opt.words().size(); ++i) {
         const OptimizedWord &word = opt.words().at(i);
-        if (!morphClientTestWord(word, inn)) {
+        switch (morphClientTestWord(word, inn)) {
+        case failedState:
             failed = true;
+            break;
+        case skippedState:
+            skipped = true;
+            break;
+        default:
+            break;
         }
     }
-    if (failed) {
-        failedCount++;
-        logStream << QString("[%1/%2]: ")
+    if (skipped) {
+        skippedCount++;
+        logStream << QString("[%1/%2/%3]: ")
                      .arg(QString::number(suc))
+                     .arg(skippedCount)
+                     .arg(QString::number(failedCount))
+                 << "failed sentence\n\t"
+                 << opt.getSentence(inn).join(" ")
+                 << endl;
+    }
+    else if (failed) {
+        failedCount++;
+        logStream << QString("[%1/%2/%3]: ")
+                     .arg(QString::number(suc))
+                     .arg(skippedCount)
                      .arg(QString::number(failedCount))
                  << "failed sentence\n\t"
                  << opt.getSentence(inn).join(" ")
@@ -214,15 +234,16 @@ bool SynTagRusParserTest::morphClientTestSentence(const OptimizedSentence &opt, 
     }
     else {
         suc++;
-        extraLogStream << QString("[%1/%2]: ")
+        extraLogStream << QString("[%1/%2/%3]: ")
                           .arg(QString::number(suc))
+                          .arg(skippedCount)
                           .arg(QString::number(failedCount))
                  << "success sentence\n\t"
                  << opt.getSentence(inn).join(" ")
                  << endl;
     }
 
-    return !failed;
+    return (skipped ? skippedState : (failed ? failedState : successedState));
 }
 
 inline QString toString(const MorphResultType &analyzed) {
@@ -240,9 +261,10 @@ inline QString toString(const MorphResultType &analyzed) {
     return result;
 }
 
-bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const int &inn)
+SynTagRusParserTest::MorphStates SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const int &inn)
 {
     static long failedCount = 0;
+    static long skippedCount = 0;
     static long successfulCount = 0;
     bool successful = false;
 
@@ -255,13 +277,22 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
             successful = true;
     }
 
+    QString what;
     if (!successful) {
-        ++failedCount;
+        if (analyzed.isEmpty()) {
+            ++skippedCount;
+            what = "skipped";
+        }
+        else {
+            ++failedCount;
+            what = "failed";
+        }
 //        Q_ASSERT(failedCount < 100);
-        logStream << QString("[%1/%2]:")
+        logStream << QString("[%1/%2/%3]:")
                     .arg(QString::number(successfulCount))
+                    .arg(skippedCount)
                     .arg(QString::number(failedCount))
-                 << " failed word\n\t"
+                 << QString(" %1 word\n\t").arg(what)
                  << word.words.at(inn) << ' ' << feature
                  << endl;
         logStream << toString(analyzed)
@@ -270,9 +301,10 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
     else {
         successfulCount++;
 //        Q_ASSERT(successfulCount < 1000);
-        extraLogStream <<  QString("[%1/%2]:")
-                        .arg(QString::number(successfulCount))
-                        .arg(QString::number(failedCount))
+        extraLogStream <<  QString("[%1/%2/%3]:")
+                           .arg(QString::number(successfulCount))
+                           .arg(skippedCount)
+                           .arg(QString::number(failedCount))
                      << " success word\n\t"
                      << word.words.at(inn) << ' ' << feature
                      << endl;
@@ -280,7 +312,11 @@ bool SynTagRusParserTest::morphClientTestWord(const OptimizedWord &word, const i
                   << endl;
     }
 
-    return successful;
+    if (what == "skipped")
+        return skippedState;
+    if (what == "failed")
+        return failedState;
+    return successedState;
 }
 
 const FeatureMapper *_dirtyHack;
@@ -469,6 +505,7 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
+    ExtensionsLogs::Logs::registerLogStream("info.n++");
 //    parsingTest();
 //    deserializeTreeCorpora();
     SynTagRusParser parser;
@@ -478,13 +515,14 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
     qDebug() << "sent count:" << parser.getTreeCorpora()->sentencesBySize().size();
     deserializeGrammar();
     CNFGrammar *grammar=_grammarParser.getGrammar();
-    qDebug().noquote() << grammar->toReport(parser.getTreeCorpora()->featureMapper());
+    QString result = grammar->toReport(parser.getTreeCorpora()->featureMapper());
+    qDebug().noquote() << result;
+    *ExtensionsLogs::Logs::log("info.n++") << result;
     grammar->rulesByFeatureID().size();
     FeatureMapper fmapper;
     LinkMapper lmapper;
     fmapper.load();
     lmapper.load();
-    qDebug().noquote() << _grammarParser.getGrammar()->toReport(fmapper);
     CYKSyntacticalAnalyzer an(fmapper, lmapper);
 //    return;
     const int sz = 5;

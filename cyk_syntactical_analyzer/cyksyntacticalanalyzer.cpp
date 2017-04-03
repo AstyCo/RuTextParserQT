@@ -78,23 +78,27 @@ QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const Ambigious
     QVector<Scored> rootScores = grammar.rootScore();
     while (i!=rootCell.constEnd()) {
         static int kk = 0;
+        static int notaddedkk = 0;
+        static int addedkk = 0;
         QSharedPointer<RuleNode> rn = i.value();
         const SimpleRuleNode *node = grammarFinalScore(i.key(), *rn, grammar);
 //        qDebug() << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
         if ( node && node->score > 0) {
-            static int addedkk = 0;
-            qreal score = rootScores[i.key()].score;
-            if (score == 0) {
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " not a root" << endl;
+            qreal rootScore = node->rootScore.score;
+            if (rootScore == 0) {
+                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not a root" << endl;
+                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
+                *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
+                ++i;
+                continue;
             }
             else {
                 result.append(i.value());
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " added with score " << score << endl;
+                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " added with score " << rootScore << endl;
+                *ExtensionsLogs::Logs::log("CYK_logs.n++")  << "added " <<addedkk++ << ' ' << kk++ << endl;
             }
-            *ExtensionsLogs::Logs::log("CYK_logs.n++")  << "added " <<addedkk++ << ' ' << kk++ << endl;
             *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
         }
-        static int notaddedkk = 0;
         *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
         *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
         ++i;
@@ -171,6 +175,8 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
     CYKCell &cell(matrix.at(i, j));
     QSet<ruleID> resultRules;
 
+    _debugCellRefusedDepth = _debugCellRefusedWidth = _debugCellTotal = 0;
+
     for (int p = 0; p < h; ++p) {
         const CYKCell &leftCell = matrix.at(i+p+1, j);
         const CYKCell &rightCell = matrix.at(i+h-p, j+h-p);
@@ -218,10 +224,16 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
                                        const ListRuleID &scoredRuleIDs,
                                        const CNFGrammar &grammar)
 {
+    qreal totalScore = 0;
+    for (int i=0; i < scoredRuleIDs.size(); ++i) {
+        const ScoredChomskyRuleRecord &ruleRecord = grammar.rulesByID()[scoredRuleIDs.at(i)];
+        totalScore += ruleRecord.score;
+    }
 
     for (int i=0; i < scoredRuleIDs.size(); ++i) {
         const ScoredChomskyRuleRecord &ruleRecord = grammar.rulesByID()[scoredRuleIDs.at(i)];
         const QSharedPointer<RuleNode> &src = (ruleRecord.rule._isRightRule ? l : r);
+//        QSharedPointer<RuleNode> src(new RuleNode(*srcL));
         const QSharedPointer<RuleNode> &dep = (ruleRecord.rule._isRightRule ? r : l);
         featureID fid = ruleRecord.rule._sourceFID;
         QSharedPointer<RuleNode> rn;
@@ -233,15 +245,29 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
             rn = QSharedPointer<RuleNode>(new RuleNode(*src));
             rn->append(RuleLink(scoredRuleIDs.at(i), dep));
         }
-        if (!grammarContainsRule(fid, *rn, grammar)) {
+        if (!grammarContainsRuleWidth(fid, *rn, grammar)) {
 //                qDebug() << "NOT CONTAINS";
-            *ExtensionsLogs::Logs::log("CYK_logs.n++") << "NOT CONTAINS "
+            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%1,%2,%3] REFUSED WIDTH ")
+                                                          .arg(++_debugCellTotal)
+                                                          .arg(_debugCellRefusedDepth)
+                                                          .arg(++_debugCellRefusedWidth)
                                                        << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
             rn->delta() += 1;
         }
-        else
-        *ExtensionsLogs::Logs::log("CYK_logs.n++") << "CONTAINS "
-                                                   << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+        else if (src->isLeaf() && !grammarContainsRuleDepth(scoredRuleIDs.at(i), dep.data(), grammar)) {
+            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%1,%2,%3] REFUSED DEPTH ")
+                                                          .arg(++_debugCellTotal)
+                                                          .arg(++_debugCellRefusedDepth)
+                                                          .arg(_debugCellRefusedWidth)
+                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+        }
+        else {
+            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%1,%2,%3] ALLOWED ")
+                                                          .arg(++_debugCellTotal)
+                                                          .arg(_debugCellRefusedDepth)
+                                                          .arg(_debugCellRefusedWidth)
+                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+        }
         if (rn->delta() > 0) {
 //            static long kk = 0;
 //            qDebug() << "NOT CORRECT RULE" << ++kk;
@@ -257,13 +283,25 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
         else {
             CYKCellIterator i(cell.find(fid, rn));
             i.value()->increaseScore();
-//            qDebug() << "cell contains" << fid;
+            qDebug() << "cell contains" << fid;
         }
 
     }
 }
 
-bool CYKSyntacticalAnalyzer::grammarContainsRule(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
+bool CYKSyntacticalAnalyzer::grammarContainsRuleDepth(ruleID rid, const RuleNode *dep, const CNFGrammar &grammar) const
+{
+    foreach (const RuleLink &link, dep->rules()) {
+        QList<ruleID> ids;
+        ids << link.id;
+        ids << rid;
+        if (!grammar.conseqRules().contains(ids))
+            return false;
+    }
+    return true;
+}
+
+bool CYKSyntacticalAnalyzer::grammarContainsRuleWidth(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
 {
     // CYK is linear, so we should check only for rn.rules from begining, or from ending (no need to check from middle)
     // firstly, check for STRAIGHT

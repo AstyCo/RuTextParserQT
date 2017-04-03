@@ -12,6 +12,12 @@ bool RuleLink::operator==(const RuleLink &other) const
     return id == other.id && *node == *other.node;
 }
 
+//const RuleLink &RuleLink::operator=(const RuleLink &other)
+//{
+//    id = other.id;
+//    node = QSharedPointer<RuleNode>(new RuleNode(*other.node));
+//}
+
 //long RuleNode::callgrind_debug = 0;
 
 QString RuleNode::toString(const QVector<ScoredChomskyRuleRecord> &ruleByID, const FeatureMapper &fmapper, const LinkMapper &lmapper, int tab)

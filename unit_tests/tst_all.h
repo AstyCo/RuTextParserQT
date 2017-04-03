@@ -38,8 +38,15 @@ public:
     }
 
 private:
-    bool morphClientTestSentence(const OptimizedSentence &sentence, const int &inn);
-    bool morphClientTestWord(const OptimizedWord &word, const int &inn);
+    enum MorphStates
+    {
+        failedState,
+        successedState,
+        skippedState
+    };
+
+    MorphStates morphClientTestSentence(const OptimizedSentence &sentence, const int &inn);
+    MorphStates morphClientTestWord(const OptimizedWord &word, const int &inn);
     bool checkEqual(RuleNode *ruleNode, RecordNode *recordNode,
                     const QVector<ScoredChomskyRuleRecord> &ruleByID,
                     const FeatureMapper &fmapper, const LinkMapper &lmapper);
@@ -60,10 +67,11 @@ private:
     void dawgLoadTest();
 
     void grammarTest();
-    void wholeTest();
+
     void testMorphClient();
-private Q_SLOTS:
     void testCYKSyntacticalAnalyzer();
+private Q_SLOTS:
+    void wholeTest();
 };
 
 #endif // TST_ALL_H

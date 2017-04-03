@@ -27,6 +27,98 @@ CNFGrammar::~CNFGrammar()
     clear();
 }
 
+
+bool compareByRootScore(const QPair<featureID, SimpleRuleTree> &lhs, const QPair<featureID, SimpleRuleTree> &rhs)
+{
+    return lhs.second.totalRootScore() < rhs.second.totalRootScore();
+}
+
+bool compareByScore(const QPair<featureID, SimpleRuleTree> &lhs, const QPair<featureID, SimpleRuleTree> &rhs)
+{
+    return lhs.second.totalScore() < rhs.second.totalScore();
+}
+
+QString CNFGrammar::toReport(const FeatureMapper &fmapper) const {
+    QList<QPair<featureID, SimpleRuleTree> > sortedRulesByFeatureID;
+    for (featureID i=0; i < _size; ++i)
+        sortedRulesByFeatureID.append(qMakePair(i, _rulesByFeatureID[i]));
+
+    std::sort(sortedRulesByFeatureID.begin(), sortedRulesByFeatureID.end(), compareByScore);
+
+    qreal totalTopRules = 0;
+    foreach (const SimpleRuleTree &tree, _rulesByFeatureID)
+        totalTopRules += tree.totalScore();
+
+    QString result(QString("TOTAL RULES:%1\n").arg(totalTopRules));
+    for (int i=0; i < _size; ++i) {
+        result += QString("\t%1: %2\n")
+                .arg(fmapper.value(sortedRulesByFeatureID[i].first))
+                .arg(sortedRulesByFeatureID[i].second.totalScore());
+    }
+
+    QList<QPair<featureID, SimpleRuleTree> > sortedRoots;
+    for (featureID i=0; i < _size; ++i)
+        sortedRoots.append(qMakePair(i, _rulesByFeatureID[i]));
+
+    std::sort(sortedRoots.begin(), sortedRoots.end(), compareByRootScore);
+
+    qreal totalRootRules = 0;
+    foreach (const SimpleRuleTree &tree, _rulesByFeatureID)
+        totalRootRules += tree.totalRootScore();
+
+    result += QString("\nTOTAL ROOT RULES:%1\n").arg(totalRootRules);
+    for (int i=0; i < _size; ++i) {
+        result += QString("\t%1: %2\n")
+                .arg(fmapper.value(sortedRoots[i].first))
+                .arg(sortedRoots[i].second.totalRootScore());
+    }
+
+    return result;
+}
+
+void CNFGrammar::append(const UniqueVector<featureID, QString> &fmapper,
+                        const UniqueVector<linkID, QString> &lmapper,
+                        const RecordNode *node,
+                        const ruleID &parentID)
+{
+    if (!node) {
+        printWarning("TreeParser::parseNode: null node");
+        return;
+    }
+
+    featureID fid = fmapper.index(node->record()._feat);
+    bool root = false;
+    if (node->record()._dom == -1) {
+        Q_ASSERT(parentID<0);
+        // root rule
+        addRoot(fid);
+        root = true;
+    }
+
+    if (!node->childNodes().isEmpty()) {
+        RuleRecord rule(fid);
+
+        ListRuleID ruleIDs;
+        for (int i=0; i < node->childNodes().size(); ++i) {
+            linkID lid = lmapper.index(node->childNodes().at(i)->record()._link);
+            featureID childFid = fmapper.index(node->childNodes().at(i)->record()._feat);
+
+            ruleID rid = insert(ChomskyRuleRecord(lid, childFid, fid,
+                                                  node->record().before(node->childNodes().at(i)->record())));
+
+            ruleIDs.append(rid);
+            // add in depth rule
+            if (parentID >= 0)
+                insertInDepthRule(rid, parentID);
+
+            // append recursively
+            append(fmapper, lmapper, node->childNodes().at(i), rid);
+        }
+        ListRuleID cykFormed = produceSequenceForCYK(ruleIDs);
+        insertWidthRule(fid, cykFormed, root);
+    }
+}
+
 //void CNFGrammar::finishBuilding()
 //{
 //    Q_ASSERT(_plistRulesByFID != NULL);
@@ -38,19 +130,6 @@ CNFGrammar::~CNFGrammar()
 //    _plistRulesByFID = NULL;
 //}
 
-void CNFGrammar::append(const RuleRecord &rule)
-{
-    ListRuleID ruleIDs;
-    foreach (const RuleDepend &depend, rule.depends()) {
-        ruleIDs.append( insert(
-                    ChomskyRuleRecord(depend.link, depend.terminal,
-                                      rule.sourceRule(), depend.isRight)));
-    }
-//    std::sort(ruleIDs.begin(), ruleIDs.end());
-
-    ListRuleID cykFormed = produceSequenceForCYK(ruleIDs);
-    insert(rule.sourceRule(), cykFormed);
-}
 
 void CNFGrammar::addRoot(const featureID &fid)
 {
@@ -66,7 +145,7 @@ void CNFGrammar::clear()
    _rootScore.clear();
     _ruleByID.clear();
     _rulesByFeatureID.clear();
-    _rulesByFeatureIDReverse.clear();
+    _conseqRules.clear();
 }
 
 void CNFGrammar::setDumpFilename(const QString &path)
@@ -89,7 +168,6 @@ void CNFGrammar::resizeVectors(int sz)
     // init vectors
     _rootScore.resize(sz);
     _rulesByFeatureID.resize(sz);
-    _rulesByFeatureIDReverse.resize(sz);
 
     resizeMatrix(sz);
 }
@@ -157,7 +235,7 @@ ListRuleID::const_iterator CNFGrammar::find(const ChomskyRuleRecord &rule) const
     return rules.constEnd();
 }
 
-void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
+void CNFGrammar::insertWidthRule(const featureID &srcRuleID, const ListRuleID &ids, bool rootRule)
 {
     if (ids.isEmpty())
         Q_ASSERT(false);
@@ -166,39 +244,22 @@ void CNFGrammar::insert(const featureID &srcRuleID, const ListRuleID &ids)
     if (node) {
         // increase score of existing rule
         node->increaseScore();
+        if (rootRule)
+            node->rootScore.increaseScore();
     }
     else {
         // insert new rule
-        _rulesByFeatureID[srcRuleID].insert(ids);
+        _rulesByFeatureID[srcRuleID].insert(ids, rootRule);
     }
+}
 
-//    // fill rules STRAIGHT
-//    ListRuleID sorted(ids);
-//    {
-//        std::sort(sorted.begin(), sorted.end());
-//        SimpleRuleNode *node = _rulesByFeatureID[srcRuleID].node(sorted);
-//        if (node) {
-//            // increase score of existing rule
-//            node->increaseScore();
-//        }
-//        else {
-//            // insert new rule
-//            _rulesByFeatureID[srcRuleID].insert(sorted);
-//        }
-//    }
-//    // fill rules BACKWARD
-//    {
-//        std::reverse(sorted.begin(), sorted.end());
-//        SimpleRuleNode *node = _rulesByFeatureIDReverse[srcRuleID].node(sorted);
-//        if (node) {
-//            // increase score of existing rule
-//            node->increaseScore();
-//        }
-//        else {
-//            // insert new rule
-//            _rulesByFeatureIDReverse[srcRuleID].insert(sorted);
-//        }
-    //    }
+void CNFGrammar::insertInDepthRule(const ruleID &rid, const ruleID &prid)
+{
+    QList<ruleID> list;
+    list.append(rid);
+    list.append(prid);
+
+    _conseqRules.insert(list, false);
 }
 
 ListRuleID CNFGrammar::produceSequenceForCYK(const ListRuleID &ids) const
@@ -251,7 +312,7 @@ QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr)
     ds << gr._size;
     ds << gr._ruleByID;
     ds << gr._rulesByFeatureID;
-    ds << gr._rulesByFeatureIDReverse;
+    ds << gr._conseqRules;
     ds << gr._rootScore;
 
     return ds;
@@ -266,7 +327,7 @@ QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
     ds >> gr._size;
     ds >> gr._ruleByID;
     ds >> gr._rulesByFeatureID;
-    ds >> gr._rulesByFeatureIDReverse;
+    ds >> gr._conseqRules;
     ds >> gr._rootScore;
 
     gr.resizeMatrix(gr._size);

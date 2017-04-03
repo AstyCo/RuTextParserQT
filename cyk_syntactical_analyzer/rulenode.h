@@ -21,6 +21,7 @@ struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT RuleLink
 
     bool operator<(const RuleLink &other) const { return id < other.id;}
     bool operator>(const RuleLink &other) const { return !(*this < other);}
+//    const RuleLink &operator=(const RuleLink &other);
 };
 
 
