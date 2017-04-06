@@ -57,22 +57,22 @@ QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const Ambigious
         return result;
     }
 
-    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "analyzing fv\n";
+//    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "analyzing fv\n";
     CYKMatrix matrix(fv.size());
     int last = fv.size() - 1;
 
     fillLastRow(fv, matrix);
-    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "last row filled\n";
+//    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "last row filled\n";
     for (int j = last-1; j >= 0; --j) {
         for (int i = last-1; i >= j; --i) {
             calcCell(matrix, i, j, grammar);
-            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("cell(%1,%2) size:%3")
-                        .arg(QString::number(i))
-                        .arg(QString::number(j))
-                        .arg(QString::number(matrix.at(i,j).size())) << endl;
+//            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("cell(%1,%2) size:%3")
+//                        .arg(QString::number(i))
+//                        .arg(QString::number(j))
+//                        .arg(QString::number(matrix.at(i,j).size())) << endl;
         }
     }
-    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "cells calculated" << endl;
+//    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "cells calculated" << endl;
     CYKCell &rootCell = matrix.at(0,0);
     CYKCellConstIterator i(rootCell.constBegin());
     QVector<Scored> rootScores = grammar.rootScore();
@@ -81,26 +81,26 @@ QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const Ambigious
         static int notaddedkk = 0;
         static int addedkk = 0;
         QSharedPointer<RuleNode> rn = i.value();
-        const SimpleRuleNode *node = grammarFinalScore(i.key(), *rn, grammar);
+        const SimpleRuleNode *node = grammarGetNodeWidth(i.key(), *rn, grammar);
 //        qDebug() << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
-        if ( node && node->score > 0) {
+        if ( node && node->score > 0.5) {
             qreal rootScore = node->rootScore.score;
-            if (rootScore == 0) {
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not a root" << endl;
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
+            if (rootScore < 0.5) {
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not a root" << endl;
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
                 ++i;
                 continue;
             }
             else {
                 result.append(i.value());
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " added with score " << rootScore << endl;
-                *ExtensionsLogs::Logs::log("CYK_logs.n++")  << "added " <<addedkk++ << ' ' << kk++ << endl;
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " added with score " << rootScore << endl;
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++")  << "added " <<addedkk++ << ' ' << kk++ << endl;
             }
-            *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
+//            *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
         }
-        *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
-        *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
+//        *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
+//        *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
         ++i;
     }
 
@@ -159,23 +159,23 @@ void CYKSyntacticalAnalyzer::fillLastRow(const AmbigiousStringVector &fv, CYKMat
             else
                 Q_ASSERT(false);
         }
-        *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("cell(%1,%2) size:%3")
-                    .arg(QString::number(last))
-                    .arg(QString::number(i))
-                    .arg(QString::number(matrix.at(last,i).size())) << endl;
+//        *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("cell(%1,%2) size:%3")
+//                    .arg(QString::number(last))
+//                    .arg(QString::number(i))
+//                    .arg(QString::number(matrix.at(last,i).size())) << endl;
     }
 }
 
 void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar)
 {
-    *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("calculating cell (%1,%2)\n").arg(QString::number(i)).arg(QString::number(j));
+//    *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("calculating cell (%1,%2)\n").arg(QString::number(i)).arg(QString::number(j));
     short sz = matrix.size();
     short h  = sz - i - 1;
 
     CYKCell &cell(matrix.at(i, j));
     QSet<ruleID> resultRules;
 
-    _debugCellRefusedDepth = _debugCellRefusedWidth = _debugCellTotal = 0;
+    _debugCellRefusedDepth = _debugCellRefusedWidth = _debugCellTotal = _debugCellRefusedLogical = 0;
 
     for (int p = 0; p < h; ++p) {
         const CYKCell &leftCell = matrix.at(i+p+1, j);
@@ -186,20 +186,20 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
             const QVector<ListRuleID> &rulesWithLeft(grammar.rulesByRightIDsHash()[l.key()]);
             CYKCellConstIterator r(rightCell.constBegin());
             while (r != rightCell.constEnd()) {
-                *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%5,%6](%1,%2)(%3,%4)")
-                            .arg(QString::number(i+p+1))
-                            .arg(QString::number(j))
-                            .arg(QString::number(i+h-p))
-                            .arg(QString::number(j+h-p))
-                            .arg(i).arg(j)
-                          <<  " looking for rule between "<<_fmapper.value(l.key())
-                         <<" and " <<_fmapper.value(r.key())
-                        << QString(" [%1]").arg(QString::number(rulesWithLeft[r.key()].size())) << endl;
-                if (rulesWithLeft[r.key()].size() > 0) {
-                    foreach (const ruleID &id, rulesWithLeft[r.key()]) {
-                        *ExtensionsLogs::Logs::log("CYK_logs.n++") << '\t' <<grammar.rulesByID()[id].toString(_fmapper, _lmapper) << endl;
-                    }
-                }
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%5,%6](%1,%2)(%3,%4)")
+//                            .arg(QString::number(i+p+1))
+//                            .arg(QString::number(j))
+//                            .arg(QString::number(i+h-p))
+//                            .arg(QString::number(j+h-p))
+//                            .arg(i).arg(j)
+//                          <<  " looking for rule between "<<_fmapper.value(l.key())
+//                         <<" and " <<_fmapper.value(r.key())
+//                        << QString(" [%1]").arg(QString::number(rulesWithLeft[r.key()].size())) << endl;
+//                if (rulesWithLeft[r.key()].size() > 0) {
+//                    foreach (const ruleID &id, rulesWithLeft[r.key()]) {
+//                        *ExtensionsLogs::Logs::log("CYK_logs.n++") << '\t' <<grammar.rulesByID()[id].toString(_fmapper, _lmapper) << endl;
+//                    }
+//                }
                 addRecord(cell, l.value(), r.value(),
                           rulesWithLeft[r.key()], grammar);
                 r++;
@@ -245,35 +245,58 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
             rn = QSharedPointer<RuleNode>(new RuleNode(*src));
             rn->append(RuleLink(scoredRuleIDs.at(i), dep));
         }
-        if (!grammarContainsRuleWidth(fid, *rn, grammar)) {
+        const SimpleRuleNode *node = grammarGetNodeWidth(fid, *rn, grammar);
+        if (node == NULL) {
 //                qDebug() << "NOT CONTAINS";
-            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%1,%2,%3] REFUSED WIDTH ")
-                                                          .arg(++_debugCellTotal)
-                                                          .arg(_debugCellRefusedDepth)
-                                                          .arg(++_debugCellRefusedWidth)
-                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
-            rn->delta() += 1;
-        }
-        else if (src->isLeaf() && !grammarContainsRuleDepth(scoredRuleIDs.at(i), dep.data(), grammar)) {
-            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%1,%2,%3] REFUSED DEPTH ")
-                                                          .arg(++_debugCellTotal)
-                                                          .arg(++_debugCellRefusedDepth)
-                                                          .arg(_debugCellRefusedWidth)
-                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+//            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[T:%1,D:%2,W:%3,L:%4] REFUSED WIDTH ")
+//                                                          .arg(++_debugCellTotal)
+//                                                          .arg(_debugCellRefusedDepth)
+//                                                          .arg(++_debugCellRefusedWidth)
+//                                                          .arg(_debugCellRefusedLogical)
+//                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+            rn->delta()++;
         }
         else {
-            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[%1,%2,%3] ALLOWED ")
-                                                          .arg(++_debugCellTotal)
-                                                          .arg(_debugCellRefusedDepth)
-                                                          .arg(_debugCellRefusedWidth)
-                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+            if (!dep->rules().isEmpty()) {
+                const SimpleRuleNode *depNode = grammarGetNodeWidth(ruleRecord.rule._dependFID, *dep, grammar);
+                if (depNode == NULL) {
+                    Q_ASSERT(false);
+                }
+                else {
+                    if (depNode->score < 0.5) {
+//                        *ExtensionsLogs::Logs::log("CYK_logs.n++")  << QString("[T:%1,D:%2,W:%3,L:%4] REFUSED LOGICAL ")
+//                                                                       .arg(++_debugCellTotal)
+//                                                                       .arg(_debugCellRefusedDepth)
+//                                                                       .arg(_debugCellRefusedWidth)
+//                                                                       .arg(++_debugCellRefusedLogical)
+//                                                                    << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+                        rn->delta()++;
+                    }
+                }
+            }
+            if (!grammarContainsRuleDepth(scoredRuleIDs.at(i), dep.data(), grammar)) {
+//                *ExtensionsLogs::Logs::log("CYK_logs.n++")  << QString("[T:%1,D:%2,W:%3,L:%4] REFUSED DEPTH ")
+//                                                               .arg(++_debugCellTotal)
+//                                                               .arg(++_debugCellRefusedDepth)
+//                                                               .arg(_debugCellRefusedWidth)
+//                                                               .arg(_debugCellRefusedLogical)
+//                                                            << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
+                rn->delta()++;
+            }
         }
+
         if (rn->delta() > 0) {
 //            static long kk = 0;
 //            qDebug() << "NOT CORRECT RULE" << ++kk;
             continue;
         }
         else {
+//            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("[T:%1,D:%2,W:%3,L:%4] ALLOWED ")
+//                                                          .arg(++_debugCellTotal)
+//                                                          .arg(_debugCellRefusedDepth)
+//                                                          .arg(_debugCellRefusedWidth)
+//                                                          .arg(_debugCellRefusedLogical)
+//                                                       << rn->toString(grammar.rulesByID(), _fmapper, _lmapper) << endl;
 //            static long kk = 0;
 //            qDebug() << "correct rule" << ++kk;
         }
@@ -301,22 +324,15 @@ bool CYKSyntacticalAnalyzer::grammarContainsRuleDepth(ruleID rid, const RuleNode
     return true;
 }
 
-bool CYKSyntacticalAnalyzer::grammarContainsRuleWidth(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
+const SimpleRuleNode *CYKSyntacticalAnalyzer::grammarGetNodeWidth(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
 {
     // CYK is linear, so we should check only for rn.rules from begining, or from ending (no need to check from middle)
     // firstly, check for STRAIGHT
     ListRuleID ordered;
     for (int i=0; i<rn.rules().size(); ++i)
         ordered.append(rn.rules().at(i).id);
-//    ListRuleID cykFormed = grammar.produceSequenceForCYK(ordered);
 
-    if (grammar.rulesByFeatureID()[fid].contains(ordered))
-        return true;
-    // don't check for backward
-//    // then, check for BACKWARD
-//    std::reverse(sorted.begin(), sorted.end());
-    //    return grammar.rulesByFeatureIDReverse()[fid].contains(sorted);
-    return false;
+    return grammar.rulesByFeatureID()[fid].node(ordered);
 }
 
 const SimpleRuleNode *CYKSyntacticalAnalyzer::grammarFinalScore(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const
@@ -326,7 +342,7 @@ const SimpleRuleNode *CYKSyntacticalAnalyzer::grammarFinalScore(const featureID 
         sorted.append(rn.rules().at(i).id);
 
     const SimpleRuleNode *node = grammar.rulesByFeatureID()[fid].node(sorted);
-    if (node /*&& node->score > 0*/) {
+    if (node && node->rootScore.score > 0.5) {
         // this means rule is final
         return node;
 //        return true;

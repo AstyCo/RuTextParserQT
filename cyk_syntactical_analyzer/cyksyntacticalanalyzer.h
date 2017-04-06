@@ -35,10 +35,10 @@ private:
                    const ListRuleID &scoredRuleIDs, const CNFGrammar &grammar);
 
     bool grammarContainsRuleDepth(ruleID rid, const RuleNode *dep, const CNFGrammar &grammar) const;
-    bool grammarContainsRuleWidth(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const;
+    const SimpleRuleNode *grammarGetNodeWidth(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const;
     const SimpleRuleNode *grammarFinalScore(const featureID &fid, const RuleNode &rn, const CNFGrammar &grammar) const;
 
-    long _debugCellTotal, _debugCellRefusedWidth, _debugCellRefusedDepth;
+    long _debugCellTotal, _debugCellRefusedWidth, _debugCellRefusedDepth, _debugCellRefusedLogical;
 };
 
 #endif // CYKANALYZER_H

@@ -14,6 +14,9 @@ class SynTagRusParserTest : public QObject
 {
     Q_OBJECT
 
+    bool treeCorporaLoaded = false;
+    bool grammarLoaded = false;
+
     SynTagRusParser _syntagrusParser;
     TreeParser _grammarParser;
     MorphClient _client;
@@ -70,6 +73,7 @@ private:
 
     void testMorphClient();
     void wholeTest();
+    void testProjective();
 private Q_SLOTS:
     void testCYKSyntacticalAnalyzer();
 };

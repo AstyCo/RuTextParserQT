@@ -7,7 +7,7 @@
 
 #include <QList>
 
-
+class CNFGrammar;
 struct RuleNode;
 
 struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT RuleLink
@@ -25,6 +25,7 @@ struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT RuleLink
 };
 
 
+class SimpleRuleNode;
 
 struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT RuleNode : public Scored
 {
@@ -35,7 +36,7 @@ public:
 
     QString toString(const QVector<ScoredChomskyRuleRecord> &ruleByID,
                          const FeatureMapper &fmapper, const LinkMapper &lmapper,
-                         int tab = 0);
+                         int tab = 0) const;
 
     const RuleNode&operator=(const RuleNode &other);
     RuleNode(const RuleNode &other);
@@ -43,12 +44,19 @@ public:
     RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue = 0, quint8 delta = 0);
     ~RuleNode();
 
-    qreal calcProb(const QVector<ScoredChomskyRuleRecord> &ruleByID) const;
+
+    const SimpleRuleNode *grammarGetNodeWidth(const featureID &fid,  const CNFGrammar &grammar) const;
+    qreal calcProb(const CNFGrammar &grammar,
+                   const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
+
+    qreal calcProb2(ruleID last, const CNFGrammar &grammar,
+                    const FeatureMapper &fmapper, const LinkMapper &lmapper, int var) const;
     quint8 &delta() { return _delta;}
     const quint8 &delta() const { return _delta;}
 
     const QList<RuleLink> &rules() const { return _rules;}
     void append(const RuleLink &link);
+    void append(const QList<RuleLink> &links);
 
 
     bool isLeaf() const { return _rules.isEmpty();}

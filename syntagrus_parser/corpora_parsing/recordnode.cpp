@@ -1,4 +1,5 @@
 #include "recordnode.h"
+#include "rutextparser_extensions/rutextparser_extensions.h"
 
 #include <QDebug>
 
@@ -49,36 +50,39 @@ void RecordNode::append(RecordNode *node)
 
 bool RecordNode::isProjective() const
 {
-    if (childNodes().isEmpty())
+    if (_childNodes.isEmpty())
         return true;
 
-    // init ids
-    QList<int> ids;
-    bool rootIns = false;
-    for (int i=0; i < _childNodes.size(); ++i) {
-        const int &childId = _childNodes.at(i)->record()._id;
-        if (!rootIns && childId > _record._id) {
-            ids.append(_record._id);
-            rootIns = true;
-        }
-        ids.append(childId);
-    }
-    if (!rootIns)
-        ids.append(_record._id);
-    qDebug() << "ids" << ids;
-
-    // check for projective
-    int last = ids.first();
-    for (int i=1; i<ids.size(); ++i) {
-        if (ids.at(i) - last != 1)
-            return false;
-        last = ids.at(i);
-    }
-    // recursive check too
     foreach (const RecordNode *child, _childNodes)
         if (!child->isProjective())
             return false;
+
+    QList<int> sortedIndexes = indexes();
+    std::sort(sortedIndexes.begin(), sortedIndexes.end());
+
+    int lastIndex = sortedIndexes.first();
+    for (int i=1; i < sortedIndexes.size(); ++i) {
+        if (sortedIndexes[i] - lastIndex != 1)
+            return false;
+        lastIndex = sortedIndexes[i];
+    }
+
     return true;
+}
+
+// not sorted
+QList<int> RecordNode::indexes() const
+{
+    QList<int> result;
+    result << _record._id;
+
+    if (_childNodes.isEmpty())
+        return result;
+
+    foreach (const RecordNode *child, _childNodes)
+        result << child->indexes();
+
+    return result;
 }
 
 int RecordNode::size() const

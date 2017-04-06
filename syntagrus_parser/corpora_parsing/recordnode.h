@@ -27,6 +27,7 @@ public:
 
     void append(RecordNode *node);
     bool isProjective() const;
+    QList<int> indexes() const; /// not sorted indexes
 
     int size() const;
     friend QDataStream &operator<<(QDataStream &ds, const RecordNode &r);

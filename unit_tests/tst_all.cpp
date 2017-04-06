@@ -438,7 +438,7 @@ bool SynTagRusParserTest::checkEqual(RuleNode *ruleNode, RecordNode *recordNode,
         }
         if (!checkEqual(ruleNode->rules().at(temp.at(i).index).node.data(), sortedChilds.at(i),ruleByID, fmapper, lmapper))
             return false;
-//        logStream << ruleToString(ruleNode->rules().at(temp.at(i).index).node.data(), ruleByID, fmapper, lmapper)
+//        logStream << ruleNode->toString(ruleByID, fmapper, lmapper);
     }
     return true;
 }
@@ -446,18 +446,18 @@ bool SynTagRusParserTest::checkEqual(RuleNode *ruleNode, RecordNode *recordNode,
 
 void SynTagRusParserTest::deserializeTreeCorpora()
 {
-    static bool deserialized = false;
-    if (deserialized)
+    if (treeCorporaLoaded)
         return;
     _syntagrusParser.deserializeTreeCorpora();
+    treeCorporaLoaded = true;
 }
 
 void SynTagRusParserTest::deserializeGrammar()
 {
-    static bool deserialized = false;
-    if (deserialized)
+    if (grammarLoaded)
         return;
     _grammarParser.deserializeGrammar();
+    grammarLoaded = true;
 }
 
 void SynTagRusParserTest::treeCorporaSerializationTest()
@@ -501,29 +501,45 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
     return res;
 }
 
-const QVector<ScoredChomskyRuleRecord> *hack;
+const CNFGrammar *hack;
+const FeatureMapper *fmapperHack;
+const LinkMapper *lmapperHack;
 bool compareByProb(QSharedPointer<RuleNode> lhs, QSharedPointer<RuleNode> &rhs)
 {
-    return lhs->calcProb(*hack) > rhs->calcProb(*hack);
+    return lhs->calcProb(*hack, *fmapperHack, *lmapperHack)
+            > rhs->calcProb(*hack, *fmapperHack, *lmapperHack);
 }
+
+bool compareByProb21(QSharedPointer<RuleNode> lhs, QSharedPointer<RuleNode> &rhs)
+{
+    return lhs->calcProb2(-1, *hack, *fmapperHack, *lmapperHack, 1)
+            > rhs->calcProb2(-1, *hack, *fmapperHack, *lmapperHack, 1);
+}
+bool compareByProb22(QSharedPointer<RuleNode> lhs, QSharedPointer<RuleNode> &rhs)
+{
+    return lhs->calcProb2(-1, *hack, *fmapperHack, *lmapperHack, 2)
+            > rhs->calcProb2(-1, *hack, *fmapperHack, *lmapperHack, 2);
+}
+
+
 
 
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
 {
+//    return;
     ExtensionsLogs::Logs::registerLogStream("info.n++");
 //    parsingTest();
-//    deserializeTreeCorpora();
-    SynTagRusParser parser;
-    parser.deserializeTreeCorpora();
+    deserializeTreeCorpora();
+//    SynTagRusParser parser;
+//    parser.deserializeTreeCorpora();
 //    parser.parse("../../rutextparserqt/test");
-//    deserializeTreeCorpora();
-    qDebug() << "sent count:" << parser.getTreeCorpora()->sentencesBySize().size();
+//    qDebug() << "sent count:" << parser.getTreeCorpora()->sentencesBySize().size();
     deserializeGrammar();
     CNFGrammar *grammar=_grammarParser.getGrammar();
-    QString result = grammar->toReport(parser.getTreeCorpora()->featureMapper());
-    qDebug().noquote() << result;
-    *ExtensionsLogs::Logs::log("info.n++") << result;
+//    QString result = grammar->toReport(parser.getTreeCorpora()->featureMapper());
+//    qDebug().noquote() << result;
+//    *ExtensionsLogs::Logs::log("info.n++") << result;
     grammar->rulesByFeatureID().size();
     FeatureMapper fmapper;
     LinkMapper lmapper;
@@ -532,9 +548,13 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
     CYKSyntacticalAnalyzer an(fmapper, lmapper);
 //    return;
     const int sz = 10;
-//    QMultiHash<int, SentenceInCorpora> sentences(_syntagrusParser.getTreeCorpora()->sentencesBySize());
-    QMultiHash<int, SentenceInCorpora> sentences(parser.getTreeCorpora()->sentencesBySize());
+    QMultiHash<int, SentenceInCorpora> sentences(_syntagrusParser.getTreeCorpora()->sentencesBySize());
+//    QMultiHash<int, SentenceInCorpora> sentences(parser.getTreeCorpora()->sentencesBySize());
     QMultiHash<int, SentenceInCorpora>::const_iterator it(sentences.constFind(sz));
+    int first =0, second =0, third =0, total=0;
+    hack = grammar;
+    fmapperHack = &fmapper;
+    lmapperHack = &lmapper;
     while(it!=sentences.constEnd() && it.key() == sz) {
         SentenceInCorpora sentence = it.value();
         qDebug() << tr("sentence (%1, %2)").arg(sentence.getFilename()).arg(sentence.getId())
@@ -549,7 +569,66 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
         qDebug() << "starting analyzing";
 
         QList<QSharedPointer<RuleNode> > analyzedSentences = an.analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
-        hack = &grammar->rulesByID();
+        qDebug() << "analyzedSz" << analyzedSentences.size();
+        total += analyzedSentences.size();
+        {
+            QList<QSharedPointer<RuleNode> > analyzedSentences21 = analyzedSentences;
+            std::sort(analyzedSentences21.begin(), analyzedSentences21.end(), compareByProb21);
+            int found = 0;
+            for (int i=0; i < analyzedSentences21.size(); ++i) {
+                QSharedPointer<RuleNode> rn = analyzedSentences21.at(i);
+                bool founded = false;
+                if (checkEqual(rn.data(), sentence.root(), _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)) {
+                    found++;
+                    founded = true;
+                    *ExtensionsLogs::Logs::log("info.n++") << QString("First Found at %1 of %2").arg(i).arg(analyzedSentences21.size()) << endl;
+                    first+= i;
+                }
+                logStream << QString("[%1](%2) ")
+                             .arg(i)
+                             .arg(rn->calcProb2(-1, *grammar, fmapper, lmapper, 1))
+                          << (founded ? "FOUNDED:\n" : "\n")
+                          << rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)
+                          << endl;
+            }
+            if (found)
+                qDebug() << "NICE, FOUND" << found;
+            else
+                qDebug() << "SAD, NOT FOUND";
+            Q_ASSERT(found == 1);
+            QVERIFY2(!analyzedSentences21.isEmpty(), "not found");
+        }
+        {
+            QList<QSharedPointer<RuleNode> > analyzedSentences22 = analyzedSentences;
+            std::sort(analyzedSentences22.begin(), analyzedSentences22.end(), compareByProb22);
+            int found = 0;
+            for (int i=0; i < analyzedSentences22.size(); ++i) {
+                QSharedPointer<RuleNode> rn = analyzedSentences22.at(i);
+                bool founded = false;
+                if (checkEqual(rn.data(), sentence.root(), _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)) {
+                    found++;
+                    founded = true;
+                    *ExtensionsLogs::Logs::log("info.n++") << QString("Second Found at %1 of %2").arg(i).arg(analyzedSentences22.size()) << endl;
+                    second+= i;
+                }
+                logStream << QString("[%1](%2) ")
+                             .arg(i)
+                             .arg(rn->calcProb2(-1, *grammar, fmapper, lmapper, 2))
+                          << (founded ? "FOUNDED:\n" : "\n")
+                          << rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)
+                          << endl;
+            }
+            if (found)
+                qDebug() << "NICE, FOUND" << found;
+            else
+                qDebug() << "SAD, NOT FOUND";
+            Q_ASSERT(found == 1);
+            QVERIFY2(!analyzedSentences22.isEmpty(), "not found");
+        }
+
+
+
+
         std::sort(analyzedSentences.begin(), analyzedSentences.end(), compareByProb);
         int found = 0;
         for (int i=0; i < analyzedSentences.size(); ++i) {
@@ -558,28 +637,83 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
             if (checkEqual(rn.data(), sentence.root(), _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)) {
                 found++;
                 founded = true;
+                *ExtensionsLogs::Logs::log("info.n++") << QString("Third Found at %1 of %2").arg(i).arg(analyzedSentences.size()) << endl;
+                third+= i;
             }
             logStream << QString("[%1](%2) ")
                          .arg(i)
-                         .arg(rn->calcProb(grammar->rulesByID()))
+                         .arg(rn->calcProb(*grammar, fmapper, lmapper))
                       << (founded ? "FOUNDED:\n" : "\n")
-//                      << rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)
+                      << rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)
                       << endl;
         }
+
+        *ExtensionsLogs::Logs::log("info.n++") << QString("Current scores [%1][%2][%3]")
+                                                  .arg(first * 1. / total)
+                                                  .arg(second * 1. / total)
+                                                  .arg(third * 1. / total) << endl;
+
         if (found)
             qDebug() << "NICE, FOUND" << found;
         else
             qDebug() << "SAD, NOT FOUND";
-        qDebug() << "analyzedSz" << analyzedSentences.size();
         Q_ASSERT(found == 1);
         QVERIFY2(!analyzedSentences.isEmpty(), "not found");
 //        qDebug() << "analyzedSentences";
         //    foreach (const QStringList &sl, analyzedSentences)
         //        qDebug() << "\tSentence:" << sl;
         it++;
-        return;
+//        return;
     }
     qDebug() << "all sentences with sz" << sz << "analyzed";
+}
+
+void SynTagRusParserTest::testProjective()
+{
+    if (!ExtensionsLogs::Logs::registerLogStream("info.n++")) {
+        Q_ASSERT(false);
+    }
+
+    deserializeTreeCorpora();
+    TreeCorpora *treeCorpora = _syntagrusParser.getTreeCorpora();
+
+    const QMultiHash<int, SentenceInCorpora> &sentencesBySize = treeCorpora->sentencesBySize();
+    QMultiHash<int, SentenceInCorpora>::const_iterator it(sentencesBySize.constBegin());
+
+
+    QMap<int, QPair<int, int> > projectiveInfo; // size => QPair(count, projective_count)
+    while(it != sentencesBySize.constEnd()) {
+        if (!projectiveInfo.contains(it.key()))
+            projectiveInfo.insert(it.key(), qMakePair(0, 0));
+
+        projectiveInfo[it.key()].first++;
+        if (it.value().isProjective())
+            projectiveInfo[it.key()].second++;
+
+        ++it;
+    }
+
+    int totalSent = 0;
+    int totalProjective = 0;
+    QMap<int, QPair<int, int> >::const_iterator iterator(projectiveInfo.constBegin());
+
+    while(iterator != projectiveInfo.constEnd()) {
+        const QPair<int, int> &val = iterator.value();
+
+        totalSent += val.first;
+        totalProjective += val.second;
+        *ExtensionsLogs::Logs::log("info.n++") << QString("\t%1: %2 (total %3)")
+                                                  .arg(iterator.key())
+                                                  .arg(val.second * 1. / val.first)
+                                                  .arg(val.first) << endl;
+        qDebug().noquote() << QString("\t%1: %2 (total %3)")
+                              .arg(iterator.key())
+                              .arg(val.second * 1. / val.first)
+                              .arg(val.first);
+        ++iterator;
+    }
+    *ExtensionsLogs::Logs::log("info.n++") << QString("TOTAL: %1").arg(totalProjective * 1. / totalSent) << endl;
+    qDebug().noquote() << QString("TOTAL: %1").arg(totalProjective * 1. / totalSent);
 }
 
 void SynTagRusParserTest::withoutSerialization()

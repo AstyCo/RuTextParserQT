@@ -1,4 +1,6 @@
 #include "rulenode.h"
+#include "grammar/cnfgrammar.h"
+#include "syntagrus_parser/grammar/simpleruletree.h"
 
 #include <QtMath>
 
@@ -22,7 +24,7 @@ bool RuleLink::operator==(const RuleLink &other) const
 
 //long RuleNode::callgrind_debug = 0;
 
-QString RuleNode::toString(const QVector<ScoredChomskyRuleRecord> &ruleByID, const FeatureMapper &fmapper, const LinkMapper &lmapper, int tab)
+QString RuleNode::toString(const QVector<ScoredChomskyRuleRecord> &ruleByID, const FeatureMapper &fmapper, const LinkMapper &lmapper, int tab) const
 {
     QString result;
     QString tabstring;
@@ -91,12 +93,89 @@ RuleNode::~RuleNode()
     //    qDebug() << "callgrind_debug" << callgrind_debug;
 }
 
-qreal RuleNode::calcProb(const QVector<ScoredChomskyRuleRecord> &ruleByID) const
+const SimpleRuleNode *RuleNode::grammarGetNodeWidth(const featureID &fid, const CNFGrammar &grammar) const
+{
+    ListRuleID ordered;
+    for (int i=0; i<_rules.size(); ++i)
+        ordered.append(_rules[i].id);
+
+    return grammar.rulesByFeatureID()[fid].node(ordered);
+}
+
+qreal RuleNode::calcProb(const CNFGrammar &grammar,
+                         const FeatureMapper &fmapper, const LinkMapper &lmapper) const
 {
     qreal result = 0;
+    const QVector<ScoredChomskyRuleRecord> &ruleByID = grammar.rulesByID();
     foreach (const RuleLink &link , _rules) {
         result += qLn(ruleByID[link.id].score);
-        result += link.node->calcProb(ruleByID);
+        result += link.node->calcProb(grammar, fmapper, lmapper);
+    }
+//    if (_rules.isEmpty())
+//        return result;
+//    QList<ruleID> ids;
+//    for (int i=0; i < _rules.size(); ++i)
+//        ids << _rules.at(i).id;
+//    featureID fid = grammar.rulesByID()[_rules.first().id].rule._sourceFID;
+//    const SimpleRuleNode *node = grammar.rulesByFeatureID()[fid].node(ids);
+//    if (node && node->score > 0.5) {
+//        result += qLn(node->score);
+//    }
+//    else {
+//        qDebug().noquote() << toString(grammar.rulesByID(), fmapper, lmapper);
+//        Q_ASSERT(node);
+//        Q_ASSERT(node->score > 0.5);
+//    }
+//    foreach (const RuleLink &link, _rules) {
+//        result += link.node->calcProb(grammar, fmapper, lmapper);
+//    }
+
+    return result;
+}
+
+qreal RuleNode::calcProb2(ruleID last, const CNFGrammar &grammar, const FeatureMapper &fmapper, const LinkMapper &lmapper, int var) const
+{
+    qreal result = 0;
+    if (_rules.isEmpty())
+        return result;
+    if (last == -1) {
+        // calculating root
+        switch (var) {
+        case 1:
+        {
+            const SimpleRuleNode *node = grammarGetNodeWidth(grammar.rulesByID()[_rules.first().id].rule._sourceFID, grammar);
+            Q_ASSERT(node!=NULL);
+
+            result += /*qLn(*/node->rootScore.score/*)*/;
+            foreach (const RuleLink &link, _rules)
+                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
+            break;
+        }
+        case 2:
+        {
+            const QVector<ScoredChomskyRuleRecord> &ruleByID = grammar.rulesByID();
+            foreach (const RuleLink &link , _rules) {
+                result += qLn(ruleByID[link.id].score);
+                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
+            }
+            break;
+        }
+        }
+    }
+    else {
+        const SimpleRuleTree &conseqRules = grammar.conseqRules();
+
+        foreach (const RuleLink &link , _rules) {
+            qreal score;
+            QList<ruleID> ids;
+            ids << link.id << last;
+            if (!conseqRules.contains(ids))
+                score = 1;
+            else
+                score = 1 + conseqRules.node(ids)->score;
+            result += /*qLn(*/score/*)*/;
+            result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
+        }
     }
     return result;
 }
@@ -107,4 +186,11 @@ void RuleNode::append(const RuleLink &link)
 //    ExtensionsQtContainers::insert_sorted(_rules, link);
     _rules.append(link);
 }
+
+void RuleNode::append(const QList<RuleLink> &links)
+{
+    foreach (const RuleLink &link, links)
+        append(link);
+}
+
 
