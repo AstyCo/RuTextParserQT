@@ -43,6 +43,7 @@ public:
     RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue = 0, quint8 delta = 0);
     ~RuleNode();
 
+    qreal calcProb(const QVector<ScoredChomskyRuleRecord> &ruleByID) const;
     quint8 &delta() { return _delta;}
     const quint8 &delta() const { return _delta;}
 

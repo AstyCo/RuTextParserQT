@@ -501,6 +501,12 @@ AmbigiousStringVector toAmbigious(const SentenceInfo &sentence) {
     return res;
 }
 
+const QVector<ScoredChomskyRuleRecord> *hack;
+bool compareByProb(QSharedPointer<RuleNode> lhs, QSharedPointer<RuleNode> &rhs)
+{
+    return lhs->calcProb(*hack) > rhs->calcProb(*hack);
+}
+
 
 
 void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
@@ -525,7 +531,7 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
     lmapper.load();
     CYKSyntacticalAnalyzer an(fmapper, lmapper);
 //    return;
-    const int sz = 5;
+    const int sz = 10;
 //    QMultiHash<int, SentenceInCorpora> sentences(_syntagrusParser.getTreeCorpora()->sentencesBySize());
     QMultiHash<int, SentenceInCorpora> sentences(parser.getTreeCorpora()->sentencesBySize());
     QMultiHash<int, SentenceInCorpora>::const_iterator it(sentences.constFind(sz));
@@ -543,15 +549,22 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
         qDebug() << "starting analyzing";
 
         QList<QSharedPointer<RuleNode> > analyzedSentences = an.analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
-
+        hack = &grammar->rulesByID();
+        std::sort(analyzedSentences.begin(), analyzedSentences.end(), compareByProb);
         int found = 0;
-        foreach (QSharedPointer<RuleNode> rn, analyzedSentences) {
+        for (int i=0; i < analyzedSentences.size(); ++i) {
+            QSharedPointer<RuleNode> rn = analyzedSentences.at(i);
             bool founded = false;
             if (checkEqual(rn.data(), sentence.root(), _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)) {
                 found++;
                 founded = true;
             }
-            logStream << (founded ? "FOUNDED:\n" : "\n") <<rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper) << endl;
+            logStream << QString("[%1](%2) ")
+                         .arg(i)
+                         .arg(rn->calcProb(grammar->rulesByID()))
+                      << (founded ? "FOUNDED:\n" : "\n")
+//                      << rn->toString( _grammarParser.getGrammar()->rulesByID(), fmapper, lmapper)
+                      << endl;
         }
         if (found)
             qDebug() << "NICE, FOUND" << found;
@@ -564,6 +577,7 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
         //    foreach (const QStringList &sl, analyzedSentences)
         //        qDebug() << "\tSentence:" << sl;
         it++;
+        return;
     }
     qDebug() << "all sentences with sz" << sz << "analyzed";
 }

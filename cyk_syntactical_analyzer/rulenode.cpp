@@ -1,5 +1,7 @@
 #include "rulenode.h"
 
+#include <QtMath>
+
 
 RuleLink::RuleLink(ruleID rid, QSharedPointer<RuleNode> ruleNode)
     : id(rid), node(ruleNode)
@@ -86,7 +88,17 @@ RuleNode::RuleNode(ruleID rid, QSharedPointer<RuleNode> child, qreal scoreValue,
 RuleNode::~RuleNode()
 {
 //    callgrind_debug--;
-//    qDebug() << "callgrind_debug" << callgrind_debug;
+    //    qDebug() << "callgrind_debug" << callgrind_debug;
+}
+
+qreal RuleNode::calcProb(const QVector<ScoredChomskyRuleRecord> &ruleByID) const
+{
+    qreal result = 0;
+    foreach (const RuleLink &link , _rules) {
+        result += qLn(ruleByID[link.id].score);
+        result += link.node->calcProb(ruleByID);
+    }
+    return result;
 }
 
 void RuleNode::append(const RuleLink &link)

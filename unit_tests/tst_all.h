@@ -69,9 +69,9 @@ private:
     void grammarTest();
 
     void testMorphClient();
-    void testCYKSyntacticalAnalyzer();
-private Q_SLOTS:
     void wholeTest();
+private Q_SLOTS:
+    void testCYKSyntacticalAnalyzer();
 };
 
 #endif // TST_ALL_H
