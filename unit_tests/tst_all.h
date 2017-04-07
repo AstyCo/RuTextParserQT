@@ -54,7 +54,7 @@ private:
                     const QVector<ScoredChomskyRuleRecord> &ruleByID,
                     const FeatureMapper &fmapper, const LinkMapper &lmapper);
 
-private:
+public:
     void deserializeTreeCorpora();
     void deserializeGrammar();
 
@@ -72,9 +72,10 @@ private:
     void grammarTest();
 
     void testMorphClient();
-    void wholeTest();
     void testProjective();
-private Q_SLOTS:
+    void wholeTest();
+    void doTest();
+public Q_SLOTS:
     void testCYKSyntacticalAnalyzer();
 };
 

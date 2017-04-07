@@ -46,7 +46,7 @@ public:
 
 
     const SimpleRuleNode *grammarGetNodeWidth(const featureID &fid,  const CNFGrammar &grammar) const;
-    qreal calcProb(const CNFGrammar &grammar,
+    qreal calcProb(ruleID prid, const CNFGrammar &grammar,
                    const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
 
     qreal calcProb2(ruleID last, const CNFGrammar &grammar,

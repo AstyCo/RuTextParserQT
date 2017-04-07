@@ -36,6 +36,12 @@ public:
 //    void startBuilding() { _plistRulesByFID = new QVector<ListScoredListRuleID>(_size);}
 //    void finishBuilding();
 
+    void calcSimpleRuleTrees() {
+        for (int i=0; i<_rulesByFeatureID.size(); ++i)
+            _rulesByFeatureID[i].calcAll();
+        _conseqRules.calcAll();
+    }
+
     QString toReport(const FeatureMapper &fmapper) const;
 
     void append(const UniqueVector<featureID, QString> &fmapper,

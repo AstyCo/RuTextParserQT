@@ -15,8 +15,10 @@ struct SYNTAGRUS_PARSERSHARED_EXPORT SimpleRuleNode : public Scored
 
     SimpleRuleNode(qreal score = 0, qreal initRootScore = 0) : Scored(score), rootScore(initRootScore) {}
 
+    int totalCount() const;
     int totalScore() const;
-    int totalRoortScore() const;
+    int totalRootScore() const;
+    int totalRootCount() const;
     void clear();
 
     friend QDataStream &operator<<(QDataStream &ds, const SimpleRuleNode &n);
@@ -29,6 +31,8 @@ SYNTAGRUS_PARSERSHARED_EXPORT QDataStream &operator>>(QDataStream &ds, SimpleRul
 class SYNTAGRUS_PARSERSHARED_EXPORT SimpleRuleTree
 {
     SimpleRuleNode _root;
+
+    int _hashTotalScore, _hashTotalCount, _hashTotalRootScore, _hashTotalRootCount;
 public:
     SimpleRuleTree();
 
@@ -38,8 +42,42 @@ public:
     SimpleRuleNode *node(const QList<ruleID> &list);
 
     int size() const { return totalScore();}
-    int totalScore() const;
-    int totalRootScore() const;
+
+    void calcAll() {
+        calcTotalScore();
+        calcTotalCount();
+        calcTotalRootScore();
+        calcTotalRootCount();
+    }
+
+    void calcTotalScore() { _hashTotalScore = _root.totalScore();}
+    void calcTotalCount() { _hashTotalCount = _root.totalCount();}
+    void calcTotalRootScore() { _hashTotalRootScore = _root.totalRootScore();}
+    void calcTotalRootCount() { _hashTotalRootCount = _root.totalRootCount();}
+
+    int totalScore() const
+    {
+//        if (_hashTotalScore == -1)
+//            _hashTotalScore = _root.totalScore();
+        return _hashTotalScore;
+    }
+    int totalCount() const {
+//        if (_hashTotalCount == -1)
+//            _hashTotalCount = _root.totalCount();
+        return _hashTotalCount;
+    }
+    int totalRootScore() const
+    {
+//        if (_hashTotalRootScore == -1)
+//            _hashTotalRootScore = _root.totalRootScore();
+        return _hashTotalRootScore;
+    }
+    int totalRootCount() const
+    {
+//        if (_hashTotalRootCount == -1)
+//            _hashTotalRootCount = _root.totalRootCount();
+        return _hashTotalRootCount;
+    }
     void clear() { _root.clear();}
 
     friend QDataStream &operator<<(QDataStream &ds, const SimpleRuleTree &tree);

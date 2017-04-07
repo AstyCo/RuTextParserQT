@@ -84,16 +84,18 @@ QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const Ambigious
         const SimpleRuleNode *node = grammarGetNodeWidth(i.key(), *rn, grammar);
 //        qDebug() << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
         if ( node && node->score > 0.5) {
+            result.append(i.value());
             qreal rootScore = node->rootScore.score;
             if (rootScore < 0.5) {
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not a root" << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
+               *ExtensionsLogs::Logs::log("info.n++") << "not a root" << endl;
                 ++i;
                 continue;
             }
             else {
-                result.append(i.value());
+                *ExtensionsLogs::Logs::log("info.n++") << "root" << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " added with score " << rootScore << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++")  << "added " <<addedkk++ << ' ' << kk++ << endl;
             }

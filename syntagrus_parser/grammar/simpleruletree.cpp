@@ -4,6 +4,7 @@
 
 SimpleRuleTree::SimpleRuleTree()
 {
+    _hashTotalCount = _hashTotalRootCount = _hashTotalRootScore = _hashTotalScore = -1;
 }
 
 void SimpleRuleTree::insert(const QList<ruleID> &list, bool rootRule)
@@ -58,14 +59,18 @@ SimpleRuleNode *SimpleRuleTree::node(const QList<ruleID> &list)
     return node;
 }
 
-int SimpleRuleTree::totalScore() const
-{
-    return _root.totalScore();
-}
 
-int SimpleRuleTree::totalRootScore() const
+
+
+
+
+
+int SimpleRuleNode::totalCount() const
 {
-    return _root.totalRoortScore();
+    int result = (score > 0.5 ? 1 : 0);
+    foreach (const SimpleRuleNode &childNode, node)
+        result += childNode.totalCount();
+    return result;
 }
 
 int SimpleRuleNode::totalScore() const
@@ -76,11 +81,19 @@ int SimpleRuleNode::totalScore() const
     return result;
 }
 
-int SimpleRuleNode::totalRoortScore() const
+int SimpleRuleNode::totalRootScore() const
 {
     int result = rootScore.score;
     foreach (const SimpleRuleNode &childNode, node)
-        result += childNode.totalRoortScore();
+        result += childNode.totalRootScore();
+    return result;
+}
+
+int SimpleRuleNode::totalRootCount() const
+{
+    int result = (rootScore.score>0.5 ? 1 : 0);
+    foreach (const SimpleRuleNode &childNode, node)
+        result += childNode.totalRootCount();
     return result;
 }
 

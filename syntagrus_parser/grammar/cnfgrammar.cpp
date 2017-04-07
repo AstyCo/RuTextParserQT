@@ -27,15 +27,23 @@ CNFGrammar::~CNFGrammar()
     clear();
 }
 
+bool compareByUniqueRootScore(const QPair<featureID, SimpleRuleTree> &lhs, const QPair<featureID, SimpleRuleTree> &rhs)
+{
+    return lhs.second.totalRootCount() > rhs.second.totalRootCount();
+}
 
 bool compareByRootScore(const QPair<featureID, SimpleRuleTree> &lhs, const QPair<featureID, SimpleRuleTree> &rhs)
 {
-    return lhs.second.totalRootScore() < rhs.second.totalRootScore();
+    return lhs.second.totalRootScore() > rhs.second.totalRootScore();
 }
 
+bool compareByUniqueScore(const QPair<featureID, SimpleRuleTree> &lhs, const QPair<featureID, SimpleRuleTree> &rhs)
+{
+    return lhs.second.totalCount() > rhs.second.totalCount();
+}
 bool compareByScore(const QPair<featureID, SimpleRuleTree> &lhs, const QPair<featureID, SimpleRuleTree> &rhs)
 {
-    return lhs.second.totalScore() < rhs.second.totalScore();
+    return lhs.second.totalScore() > rhs.second.totalScore();
 }
 
 QString CNFGrammar::toReport(const FeatureMapper &fmapper) const {
@@ -50,11 +58,24 @@ QString CNFGrammar::toReport(const FeatureMapper &fmapper) const {
         totalTopRules += tree.totalScore();
 
     QString result(QString("TOTAL RULES:%1\n").arg(totalTopRules));
+
     for (int i=0; i < _size; ++i) {
         result += QString("\t%1: %2\n")
                 .arg(fmapper.value(sortedRulesByFeatureID[i].first))
                 .arg(sortedRulesByFeatureID[i].second.totalScore());
     }
+    qreal totalTopRulesCount = 0;
+    foreach (const SimpleRuleTree &tree, _rulesByFeatureID)
+        totalTopRulesCount += tree.totalCount();
+
+    std::sort(sortedRulesByFeatureID.begin(), sortedRulesByFeatureID.end(), compareByUniqueScore);
+    result += QString("\nTOTAL UNIQUE RULES:%1\n").arg(totalTopRulesCount);
+    for (int i=0; i < _size; ++i) {
+        result += QString("\t%1: %2\n")
+                .arg(fmapper.value(sortedRulesByFeatureID[i].first))
+                .arg(sortedRulesByFeatureID[i].second.totalCount());
+    }
+
 
     QList<QPair<featureID, SimpleRuleTree> > sortedRoots;
     for (featureID i=0; i < _size; ++i)
@@ -72,6 +93,18 @@ QString CNFGrammar::toReport(const FeatureMapper &fmapper) const {
                 .arg(fmapper.value(sortedRoots[i].first))
                 .arg(sortedRoots[i].second.totalRootScore());
     }
+    qreal totalRootCount = 0;
+    foreach (const SimpleRuleTree &tree, _rulesByFeatureID)
+        totalRootCount += tree.totalRootCount();
+
+    std::sort(sortedRoots.begin(), sortedRoots.end(), compareByUniqueRootScore);
+    result += QString("\nTOTAL UNIQUE ROOT RULES:%1\n").arg(totalRootCount);
+    for (int i=0; i < _size; ++i) {
+        result += QString("\t%1: %2\n")
+                .arg(fmapper.value(sortedRoots[i].first))
+                .arg(sortedRoots[i].second.totalRootCount());
+    }
+
 
     return result;
 }
@@ -108,8 +141,8 @@ void CNFGrammar::append(const UniqueVector<featureID, QString> &fmapper,
 
             ruleIDs.append(rid);
             // add in depth rule
-            if (parentID >= 0)
-                insertInDepthRule(rid, parentID);
+//            if (parentID >= 0)
+            insertInDepthRule(rid, parentID);
 
             // append recursively
             append(fmapper, lmapper, node->childNodes().at(i), rid);

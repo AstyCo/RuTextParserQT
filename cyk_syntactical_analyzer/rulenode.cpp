@@ -102,14 +102,22 @@ const SimpleRuleNode *RuleNode::grammarGetNodeWidth(const featureID &fid, const 
     return grammar.rulesByFeatureID()[fid].node(ordered);
 }
 
-qreal RuleNode::calcProb(const CNFGrammar &grammar,
+qreal RuleNode::calcProb(ruleID prid, const CNFGrammar &grammar,
                          const FeatureMapper &fmapper, const LinkMapper &lmapper) const
 {
     qreal result = 0;
     const QVector<ScoredChomskyRuleRecord> &ruleByID = grammar.rulesByID();
+    const SimpleRuleTree &seqTree = grammar.conseqRules();
     foreach (const RuleLink &link , _rules) {
-        result += qLn(ruleByID[link.id].score);
-        result += link.node->calcProb(grammar, fmapper, lmapper);
+        qreal ruleScore = ruleByID[link.id].score;
+//        const SimpleRuleNode *nodeL = seqTree.node(QList<ruleID>() << link.id);
+//        qreal coef = nodeL->totalCount() * 1. / nodeL->totalScore();
+//        qreal seqScore = seqTree.node(QList<ruleID>() << link.id << prid)->score;
+        featureID fid_src = ruleByID[link.id].rule._sourceFID;
+        const SimpleRuleTree &tree = grammar.rulesByFeatureID()[fid_src];
+        result += /*qLn(*/ruleScore /** tree.totalCount() *1. / tree.totalScore()*//*)*/;
+//        result += seqScore * coef;
+        result += link.node->calcProb(link.id, grammar, fmapper, lmapper);
     }
 //    if (_rules.isEmpty())
 //        return result;
@@ -138,31 +146,32 @@ qreal RuleNode::calcProb2(ruleID last, const CNFGrammar &grammar, const FeatureM
     qreal result = 0;
     if (_rules.isEmpty())
         return result;
-    if (last == -1) {
-        // calculating root
-        switch (var) {
-        case 1:
-        {
-            const SimpleRuleNode *node = grammarGetNodeWidth(grammar.rulesByID()[_rules.first().id].rule._sourceFID, grammar);
-            Q_ASSERT(node!=NULL);
 
-            result += /*qLn(*/node->rootScore.score/*)*/;
-            foreach (const RuleLink &link, _rules)
-                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
-            break;
-        }
-        case 2:
-        {
-            const QVector<ScoredChomskyRuleRecord> &ruleByID = grammar.rulesByID();
-            foreach (const RuleLink &link , _rules) {
-                result += qLn(ruleByID[link.id].score);
-                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
-            }
-            break;
-        }
-        }
-    }
-    else {
+//    if (last == -1) {
+//        // calculating root
+//        switch (var) {
+//        case 1:
+//        {
+//            const SimpleRuleNode *node = grammarGetNodeWidth(grammar.rulesByID()[_rules.first().id].rule._sourceFID, grammar);
+//            Q_ASSERT(node!=NULL);
+
+//            result += /*qLn(*/node->rootScore.score/*)*/;
+//            foreach (const RuleLink &link, _rules)
+//                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
+//            break;
+//        }
+//        case 2:
+//        {
+//            const QVector<ScoredChomskyRuleRecord> &ruleByID = grammar.rulesByID();
+//            foreach (const RuleLink &link , _rules) {
+//                result += qLn(ruleByID[link.id].score);
+//                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
+//            }
+//            break;
+//        }
+//        }
+//    }
+//    else {
         const SimpleRuleTree &conseqRules = grammar.conseqRules();
 
         foreach (const RuleLink &link , _rules) {
@@ -173,10 +182,10 @@ qreal RuleNode::calcProb2(ruleID last, const CNFGrammar &grammar, const FeatureM
                 score = 1;
             else
                 score = 1 + conseqRules.node(ids)->score;
-            result += /*qLn(*/score/*)*/;
+            result += qLn(score);
             result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
         }
-    }
+//    }
     return result;
 }
 
