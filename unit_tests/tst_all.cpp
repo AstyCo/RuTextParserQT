@@ -568,6 +568,8 @@ void SynTagRusParserTest::testCYKSyntacticalAnalyzer()
             continue;
         }
 
+
+
         qDebug() << "starting analyzing";
 
         QList<QSharedPointer<RuleNode> > analyzedSentences = an.analyze(toAmbigious(sentence.qDebugSentence()), *_grammarParser.getGrammar());
@@ -777,12 +779,22 @@ void SynTagRusParserTest::doTest()
     while(it!=sentences.constEnd() /*&& it.key() == sz*/) {
         SentenceInCorpora sentence = it.value();
         *ExtensionsLogs::Logs::log("info.n++") << tr("sentence (%1, %2) ").arg(sentence.getFilename()).arg(sentence.getId())
-                 << sentence.qDebugSentence().wordList().join(' ')
-                 << '\n' << sentence.qDebugSentence().featList().join(' ') << endl;
+                 << sentence.qDebugSentence().wordList().join(',')
+                 << '\n' << sentence.qDebugSentence().featList().join(',') << endl;
         if (!sentence.isProjective()) {
             qDebug() << "NOT PROJECTIVE";
             it++;
             continue;
+        }
+        if (sentence.size() < 2 || sentence.size() > 20) {
+            it++;
+            continue;
+        }
+        foreach (const WordInCorpora &word, sentence.qDebugSentence().vector()) {
+            if (!fmapper.isValid(fmapper.index(word.feature()))) {
+                it++;
+                continue;
+            }
         }
         startTime = QDateTime::currentDateTimeUtc();
         qDebug() << "starting analyzing";
