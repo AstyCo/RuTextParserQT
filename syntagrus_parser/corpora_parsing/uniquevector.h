@@ -32,6 +32,12 @@ public:
             return _invalidIndex;
         return indexesHash[feature];
     }
+
+    bool contains(const TValue &value)
+    {
+        return indexesHash.contains(value);
+    }
+
     int size() const { return values.size();}
 
     void clear() {

@@ -44,7 +44,8 @@ private:
     enum MorphStates
     {
         failedState,
-        successedState,
+        successedAtFirstState,
+        successedNotFirstState,
         skippedState
     };
 
@@ -71,12 +72,17 @@ public:
 
     void grammarTest();
 
-    void testMorphClient();
     void testProjective();
     void wholeTest();
     void doTest();
-public Q_SLOTS:
     void testCYKSyntacticalAnalyzer();
+    void testMorphClient();
+public Q_SLOTS:
+    void testFirstGrammar();
+    void testFirstGrammar2();
+
+    void testSecondGrammar();
+    void testSecondGrammar2();
 };
 
 #endif // TST_ALL_H

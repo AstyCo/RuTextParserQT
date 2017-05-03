@@ -11,6 +11,40 @@
 
 typedef QMultiMap<featureID, QSharedPointer<RuleNode> > FeatureMultiMap;
 
+//struct CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT CYKRuleNode
+//{
+//    QMap<ruleID, QSharedPointer<CYKRuleNode> > childs;
+//    QList<QSharedPointer<CYKRuleNode> > value;
+
+//    CYKRuleNode() : {}
+//};
+
+//class CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT CYKRuleTree
+//{
+//    CYKRuleNode _root;
+//public:
+//    CYKRuleTree();
+
+//    void insert(const QList<ruleID> &list, bool rootRule);
+//    bool contains(const QList<ruleID> &list) const;
+//    const CYKRuleNode *node(const QList<ruleID> &list) const;
+//    CYKRuleNode *node(const QList<ruleID> &list);
+//};
+
+
+
+
+//class RulesNode
+//{
+//    QList<*RulesNode> childs;
+
+//};
+
+class RulesTree
+{
+
+};
+
 struct CYKCell: public QMultiMap<featureID, QSharedPointer<RuleNode> >
 {
     bool contains(const featureID &key, const QSharedPointer<RuleNode> &value) const {

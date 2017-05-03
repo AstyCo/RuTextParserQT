@@ -25,6 +25,11 @@
 //    }
 //}
 
+void CYKSyntacticalAnalyzer::setMaxTime(const qint64 &value)
+{
+    maxTime = value;
+}
+
 CYKSyntacticalAnalyzer::CYKSyntacticalAnalyzer(const QString &fmapper, const QString &lmapper)
 {
 //    qInstallMessageHandler(myMessageHandler);
@@ -49,13 +54,14 @@ CYKSyntacticalAnalyzer::CYKSyntacticalAnalyzer(const FeatureMapper &fm, const Li
         Q_ASSERT(false);
 }
 
-QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar)
+QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar, QString *error)
 {
     QList<QSharedPointer<RuleNode> > result;
     if (fv.isEmpty()) {
         qWarning("CYK Syntactical Analyzer trying to analyze empty sentence");
         return result;
     }
+    timer.start();
 
 //    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "analyzing fv\n";
     CYKMatrix matrix(fv.size());
@@ -65,7 +71,8 @@ QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const Ambigious
 //    *ExtensionsLogs::Logs::log("CYK_logs.n++") << "last row filled\n";
     for (int j = last-1; j >= 0; --j) {
         for (int i = last-1; i >= j; --i) {
-            calcCell(matrix, i, j, grammar);
+            if (!calcCell(matrix, i, j, grammar, error))
+                return result;
 //            *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("cell(%1,%2) size:%3")
 //                        .arg(QString::number(i))
 //                        .arg(QString::number(j))
@@ -90,12 +97,12 @@ QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const Ambigious
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not a root" << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << "not added " <<  notaddedkk++ << ' ' << kk++ << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << rn->toString(grammar.rulesByID(), _fmapper, _lmapper);
-               *ExtensionsLogs::Logs::log("info.n++") << "not a root" << endl;
+//               *ExtensionsLogs::Logs::log("info.n++") << "not a root" << endl;
                 ++i;
                 continue;
             }
             else {
-                *ExtensionsLogs::Logs::log("info.n++") << "root" << endl;
+//                *ExtensionsLogs::Logs::log("info.n++") << "root" << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++") << _fmapper.value(i.key()) << " added with score " << rootScore << endl;
 //                *ExtensionsLogs::Logs::log("CYK_logs.n++")  << "added " <<addedkk++ << ' ' << kk++ << endl;
             }
@@ -117,9 +124,9 @@ inline AmbigiousStringVector toAmbigious(const QStringList &sentence)
     return res;
 }
 
-QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const QStringList &v, const CNFGrammar &grammar)
+QList<QSharedPointer<RuleNode> > CYKSyntacticalAnalyzer::analyze(const QStringList &v, const CNFGrammar &grammar, QString *error)
 {
-    return analyze(toAmbigious(v), grammar);
+    return analyze(toAmbigious(v), grammar, error);
 }
 
 //ListRuleID CYKSyntacticalAnalyzer::produceCYKSequence(const RuleNode &rn, const CNFGrammar &grammar)
@@ -168,7 +175,7 @@ void CYKSyntacticalAnalyzer::fillLastRow(const AmbigiousStringVector &fv, CYKMat
     }
 }
 
-void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar)
+bool CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar, QString *error)
 {
 //    *ExtensionsLogs::Logs::log("CYK_logs.n++") << QString("calculating cell (%1,%2)\n").arg(QString::number(i)).arg(QString::number(j));
     short sz = matrix.size();
@@ -178,6 +185,12 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
     QSet<ruleID> resultRules;
 
     _debugCellRefusedDepth = _debugCellRefusedWidth = _debugCellTotal = _debugCellRefusedLogical = 0;
+
+    if (maxTime && timer.elapsed() > maxTime) {
+        if (error != NULL)
+            *error = QString("passed more than %1 msec").arg(maxTime);
+        return false;
+    }
 
     for (int p = 0; p < h; ++p) {
         const CYKCell &leftCell = matrix.at(i+p+1, j);
@@ -217,7 +230,7 @@ void CYKSyntacticalAnalyzer::calcCell(CYKMatrix &matrix, const int &i, const int
 //        }
 
     }
-
+    return true;
 }
 
 void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
@@ -302,14 +315,14 @@ void CYKSyntacticalAnalyzer::addRecord(CYKCell &cell,
 //            static long kk = 0;
 //            qDebug() << "correct rule" << ++kk;
         }
-        if (!cell.contains(fid, rn)) {
+//        if (!cell.contains(fid, rn)) {
             cell.insert(fid, rn);
-        }
-        else {
-            CYKCellIterator i(cell.find(fid, rn));
-            i.value()->increaseScore();
-            qDebug() << "cell contains" << fid;
-        }
+//        }
+//        else {
+//            CYKCellIterator i(cell.find(fid, rn));
+//            i.value()->increaseScore();
+//            qDebug() << "cell contains" << fid;
+//        }
 
     }
 }

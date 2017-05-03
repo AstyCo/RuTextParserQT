@@ -122,13 +122,14 @@ void CNFGrammar::append(const UniqueVector<featureID, QString> &fmapper,
     featureID fid = fmapper.index(node->record()._feat);
     bool root = false;
     if (node->record()._dom == -1) {
-        Q_ASSERT(parentID<0);
+//        Q_ASSERT(parentID<0);
         // root rule
-        addRoot(fid);
+//        addRoot(fid);
         root = true;
     }
 
     if (!node->childNodes().isEmpty()) {
+
         RuleRecord rule(fid);
 
         ListRuleID ruleIDs;

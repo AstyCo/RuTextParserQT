@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 include(../link_projects_include.pri)
 include(../rutextparser_extensions_include.pri)
+include(../dawg_impl_include.pri)
 
 
 SOURCES += \
@@ -41,7 +42,12 @@ SOURCES += \
     corpora_parsing/optimizedsentence.cpp \
     corpora_parsing/optimizedword.cpp \
     grammar/scoredrules.cpp \
-    grammar/simpleruletree.cpp
+    grammar/simpleruletree.cpp \
+    grammar/firstcfg.cpp \
+    grammar/secondcfg.cpp \
+    grammar/firsttocnfdawg.cpp \
+    grammar/humandawg.cpp \
+    grammar/firstcnf.cpp
 
 HEADERS +=\
         syntagrus_parser_global.h \
@@ -62,7 +68,15 @@ HEADERS +=\
     grammar/rulerecord.h \
     grammar/scoredrules.h \
     corpora_parsing/uniquevector.h \
-    grammar/simpleruletree.h
+    grammar/simpleruletree.h \
+    grammar/firstcfgparser.h \
+    grammar/secondcfgparser.h \
+    grammar/firstcfg.h \
+    grammar/secondcfg.h \
+    grammar/ruledirection.h \
+    grammar/firsttocnfdawg.h \
+    grammar/humandawg.h \
+    grammar/firstcnf.h
 
 unix {
     target.path = /usr/lib

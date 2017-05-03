@@ -7,13 +7,15 @@
 #include <QtCore>
 
 // 8-bit unsigned integer.
-typedef quint8 linkID;      // ( 0-67  syntagrus 2012.)
+typedef qint8 linkID;      // ( 0-67  syntagrus 2012.)
 #define INVALID_LINK (static_cast<linkID>(127))
 
 // 16-bit integer.
 typedef qint16 ruleID;
 // 16-bit integer.
 typedef qint16 featureID;   // ( 0-535 syntagrus2012.)
+
+
 
 struct FeatureMapper: public UniqueVector<featureID, QString>, public Dumpable
 {

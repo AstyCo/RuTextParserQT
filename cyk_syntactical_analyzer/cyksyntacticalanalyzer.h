@@ -7,6 +7,7 @@
 #include "syntagrus_parser/corpora_parsing/uniquevector.h"
 
 #include <QList>
+#include <QElapsedTimer>
 
 
 typedef QList<QStringList> AmbigiousStringVector;
@@ -16,19 +17,24 @@ typedef QList<QString> FeatureVector;
 
 class CYK_SYNTACTICAL_ANALYZERSHARED_EXPORT CYKSyntacticalAnalyzer
 {
+    QElapsedTimer timer;
+    qint64 maxTime;
+
     FeatureMapper _fmapper;
     LinkMapper _lmapper;
 public:
     CYKSyntacticalAnalyzer(const QString &fmapper = QString(), const QString &lmapper = QString());   ///< for deserialization
     CYKSyntacticalAnalyzer(const FeatureMapper &fm, const LinkMapper &lm);
 
-    QList<QSharedPointer<RuleNode> > analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar);
-    QList<QSharedPointer<RuleNode> > analyze(const QStringList &v, const CNFGrammar &grammar);
+    QList<QSharedPointer<RuleNode> > analyze(const AmbigiousStringVector &fv, const CNFGrammar &grammar, QString *error = NULL);
+    QList<QSharedPointer<RuleNode> > analyze(const QStringList &v, const CNFGrammar &grammar, QString *error = NULL);
+
+    void setMaxTime(const qint64 &value);
 
 private:
-//    ListRuleID produceCYKSequence(const RuleNode &rn, const CNFGrammar &grammar);
+    //    ListRuleID produceCYKSequence(const RuleNode &rn, const CNFGrammar &grammar);
     void fillLastRow(const AmbigiousStringVector &fv, CYKMatrix &matrix);
-    void calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar);
+    bool calcCell(CYKMatrix &matrix, const int &i, const int &j, const CNFGrammar &grammar, QString *error);
     void addRecord(CYKCell &cell,
                    const QSharedPointer<RuleNode> &l,
                    const QSharedPointer<RuleNode> &r,
