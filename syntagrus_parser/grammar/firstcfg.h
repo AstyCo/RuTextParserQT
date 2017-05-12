@@ -37,9 +37,9 @@ public:
     const QMap<nonterminal, QList<QSet<QList<linkID> > > > & linksForRules() const { return _linksForRules;}
 
 
-    void addRoot(const QList<TDep> &deps)
+    void addRoot(const featureID &src, const QList<TDep> &deps)
     {
-        addToSrc(rootNT(), deps);
+        addToSrc(rootNT(), deps, src);
     }
 
     void add(const featureID &src, const QList<TDep> &deps)
@@ -66,15 +66,15 @@ public:
 
             ruleBodyIndex = _nonterminalRules[src].indexOf(rb);
             _linksForRules[src].append(QSet<QList<linkID> >());
-            _linksForRules[src][ruleBodyIndex].insert(links);
         }
         else {
             // found
-            _linksForRules[src][ruleBodyIndex].insert(links);
         }
+        _linksForRules[src][ruleBodyIndex].insert(links);
     }
 
     nonterminal rootNT() const { return 1;}
+    nonterminal eosNT() const { return 0;}
 //    nonterminal generateNewNonterminal() { return _nextNonterminal++;}
 
     void clear()
@@ -130,10 +130,19 @@ private:
         _terminalRules.append(-1); // occupies size for invalid, and rootNT
     }
 
-    void addToSrc(nonterminal srcNT, const QList<TDep> &deps)
+    void addToSrc(nonterminal srcNT, const QList<TDep> &deps, nonterminal extraForRoot = -1)
     {
         RuleBody newRuleBody;
         QList<linkID> links;
+
+        bool inserted = false;
+        nonterminal extraForRootNT = -1;
+        if (extraForRoot != -1) {
+            if (!_terminalRules.contains(extraForRoot))
+                _terminalRules.append(extraForRoot);
+            extraForRootNT = _terminalRules.index(extraForRoot);
+        }
+
 
         for (int i=0; i < deps.size(); ++i) {
             nonterminal depNT;
@@ -142,13 +151,45 @@ private:
 
             depNT = _terminalRules.index(deps.at(i).second.second);
 
+//            if (extraForRoot != -1 && !inserted && (
+//                                       deps.at(i).first == RightRule
+//                        || i == deps.size() - 1)) {
+//                newRuleBody.append(qMakePair(RightRule, extraForRoot));
+//                inserted = true;
+//            }
             newRuleBody.append(qMakePair(deps.at(i).first, depNT));
             links.append(deps.at(i).second.first);
         }
 
-        insertRuleBody(srcNT, newRuleBody, links);
+        if (extraForRoot != -1) { // if root, add eos character
+            newRuleBody.append(qMakePair(RightRule, eosNT()));
+        }
+
+        newRuleBody = produceSpecialForm(newRuleBody);
+
+        if (extraForRoot != -1) {
+            newRuleBody.append(qMakePair(RightRule, extraForRootNT));
+        }
+
+        insertRuleBody(srcNT, newRuleBody, links/*, root*/);
     }
 
+    RuleBody produceSpecialForm(const RuleBody &body)
+    {
+        RuleBody result;
+        RuleBody rightHalf;
+        for (int i=0; i < body.size(); ++i) {
+            if (isLeft(body.at(i).first))
+                result.append(body.at(i));
+            else {
+                rightHalf.append(body.at(i));
+            }
+        }
+        for (int i=rightHalf.size()-1; i >=0; --i)
+            result.append(rightHalf.at(i));
+
+        return result;
+    }
 
     friend QDataStream &operator<<(QDataStream &ds, const FirstCFG &s);
     friend QDataStream &operator>>(QDataStream &ds, FirstCFG &s);

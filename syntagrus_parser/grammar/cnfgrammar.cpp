@@ -8,6 +8,21 @@
 #include <QDebug>
 
 
+int CNFGrammar::rootRulesCount() const
+{
+    return _rootRulesCount;
+}
+
+int CNFGrammar::conseqRulesCount() const
+{
+    return _conseqRulesCount;
+}
+
+int CNFGrammar::rootCount() const
+{
+    return _rootCount;
+}
+
 CNFGrammar::CNFGrammar()
     : _size(0)
 {
@@ -144,6 +159,9 @@ void CNFGrammar::append(const UniqueVector<featureID, QString> &fmapper,
             // add in depth rule
 //            if (parentID >= 0)
             insertInDepthRule(rid, parentID);
+            if (root)
+                insertRootRule(fid, rid);
+
 
             // append recursively
             append(fmapper, lmapper, node->childNodes().at(i), rid);
@@ -294,6 +312,28 @@ void CNFGrammar::insertInDepthRule(const ruleID &rid, const ruleID &prid)
     list.append(prid);
 
     _conseqRules.insert(list, false);
+
+    if (prid >= 0) {
+        const ChomskyRuleRecord &rule = _ruleByID[prid].rule;
+        QPair<linkID, featureID> key1(rule._linkID, rule._dependFID);
+        QPair<QPair<linkID, featureID>,ruleID> key(key1, rid);
+
+
+        if (_conseqRulesV2.contains(key))
+            _conseqRulesV2[key]++;
+        else
+            _conseqRulesV2[key] = 1;
+    }
+}
+
+void CNFGrammar::insertRootRule(const featureID &fid, const ruleID &rid)
+{
+    QPair<featureID, ruleID> key(fid, rid);
+
+    if (_conseqRulesRoot.contains(key))
+        _conseqRulesRoot[key]++;
+    else
+        _conseqRulesRoot[key] = 1;
 }
 
 ListRuleID CNFGrammar::produceSequenceForCYK(const ListRuleID &ids) const
@@ -348,6 +388,11 @@ QDataStream &operator<<(QDataStream &ds, const CNFGrammar &gr)
     ds << gr._rulesByFeatureID;
     ds << gr._conseqRules;
     ds << gr._rootScore;
+    ds << gr._conseqRulesV2;
+    ds << gr._conseqRulesRoot;
+    ds << gr._rootCount;
+    ds << gr._rootRulesCount;
+    ds << gr._conseqRulesCount;
 
     return ds;
 }
@@ -363,6 +408,11 @@ QDataStream &operator>>(QDataStream &ds, CNFGrammar &gr)
     ds >> gr._rulesByFeatureID;
     ds >> gr._conseqRules;
     ds >> gr._rootScore;
+    ds >> gr._conseqRulesV2;
+    ds >> gr._conseqRulesRoot;
+    ds >> gr._rootCount;
+    ds >> gr._rootRulesCount;
+    ds >> gr._conseqRulesCount;
 
     gr.resizeMatrix(gr._size);
     for (int i=0; i < gr._ruleByID.size(); ++i)

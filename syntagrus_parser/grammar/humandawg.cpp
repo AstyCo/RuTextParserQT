@@ -3,31 +3,31 @@
 using namespace  dawgdic;
 
 HumanDAWG::HumanDAWG(Completer *completer)
-    : _dic(completer->dic()), _guide(completer->guide())
+    : _dic(completer->dic()), _guide(completer->guide()), _root(new NodeDAWG())
 {
     buildFromCompleter(completer);
 }
 
 bool HumanDAWG::contains(const QList<LabelType> &body) const
 {
-    NodeDAWG curNode = _root;
+    QSharedPointer<NodeDAWG> curNode = _root;
 
     for (int i=0; i < body.size(); ++i) {
-        if (!curNode.childs.contains(body.at(i)))
+        if (!curNode->childs.contains(body.at(i)))
             return false;
-        curNode = curNode.childs[body.at(i)];
+        curNode = curNode->childs[body.at(i)];
     }
     return true;
 }
 
 int HumanDAWG::finalCount() const
 {
-    return _root.finalCount();
+    return _root->finalCount();
 }
 
 int HumanDAWG::intermediateCount() const
 {
-    return _root.intermediateCount();
+    return _root->intermediateCount();
 }
 
 void HumanDAWG::buildFromCompleter(Completer *completer)
@@ -128,18 +128,28 @@ LabelType HumanDAWG::ltFromByteArray(const QByteArray &array)
     return result;
 }
 
-void HumanDAWG::makeStep4H(BaseType index, NodeDAWG &node)
+void HumanDAWG::makeStep4H(BaseType index, QSharedPointer<NodeDAWG> node)
 {
+    if (_hashIndexToNode.contains(index))
+        return; // parsed already
+    _hashIndexToNode.insert(index, node);
+
     IndexPaths step4Indexes = makeStep4(index);
 
     IndexPaths::const_iterator it(step4Indexes.constBegin());
     while (it != step4Indexes.constEnd()) {
         BaseType childIndex = it.key();
+        QSharedPointer<NodeDAWG> childNode;
+        if (!_hashIndexToNode.contains(childIndex)) {
+            childNode = QSharedPointer<NodeDAWG>(new NodeDAWG());
+            makeStep4H(childIndex, childNode);
+        }
+        else {
+            childNode = _hashIndexToNode[childIndex];
+        }
 
         foreach (const QByteArray &str, it.value()) {
-            NodeDAWG childNode;
-            makeStep4H(childIndex, childNode);
-            node.childs.insert(ltFromByteArray(str), childNode);
+            node->childs.insert(ltFromByteArray(str), childNode);
         }
         ++it;
     }
@@ -148,7 +158,7 @@ void HumanDAWG::makeStep4H(BaseType index, NodeDAWG &node)
 //        qDebug() << "value "<< value;
         Q_ASSERT(value == 1);
 
-        node.final = true;
+        node->final = true;
     }
 
 }
@@ -156,27 +166,34 @@ void HumanDAWG::makeStep4H(BaseType index, NodeDAWG &node)
 int NodeDAWG::finalCount() const
 {
     int result = (final ? 1 : 0);
-    foreach (const NodeDAWG &node, childs)
-        result += node.finalCount();
+    foreach (QSharedPointer<NodeDAWG> node, childs)
+        result += node->finalCount();
     return result;
 }
 
 int NodeDAWG::intermediateCount() const
 {
     int result = (final ? 0 : 1);
-    foreach (const NodeDAWG &node, childs)
-        result += node.intermediateCount();
+    foreach (QSharedPointer<NodeDAWG> node, childs)
+        result += node->intermediateCount();
     return result;
 }
 
 void NodeDAWG::prepare()
 {
     prepareThis();
-    QMap<LabelType, NodeDAWG>::iterator it(childs.begin());
+    QMap<LabelType, QSharedPointer<NodeDAWG>>::iterator it(childs.begin());
     while (it != childs.end()) {
-        it.value().prepare();
+        it.value()->prepare();
 
         ++it;
     }
+}
+
+void NodeDAWG::prepareThis()
+{
+    visited = false;
+    nt = -1;
+    len2fix.clear();
 }
 

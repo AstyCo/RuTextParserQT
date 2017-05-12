@@ -1,5 +1,5 @@
-#ifndef FIRSTTOCNFDAWG_H
-#define FIRSTTOCNFDAWG_H
+#ifndef SIMPLYCNFBUILDER_H
+#define SIMPLYCNFBUILDER_H
 
 #include "syntagrus_parser_global.h"
 #include "firstcfg.h"
@@ -16,7 +16,7 @@
 #include <QMap>
 #include <QList>
 
-class SYNTAGRUS_PARSERSHARED_EXPORT FirstToCNFDAWG
+class SYNTAGRUS_PARSERSHARED_EXPORT SimplyCNFBuilder
 {
     typedef QPair<RuleDirection, nonterminal> DirectedNonterminal;
     typedef QList<DirectedNonterminal> RuleBody;
@@ -26,26 +26,15 @@ class SYNTAGRUS_PARSERSHARED_EXPORT FirstToCNFDAWG
     FirstCNF _cnf;
 
 public:
-    FirstToCNFDAWG(FirstCFG *cfg);
+    SimplyCNFBuilder(FirstCFG *cfg);
 
     FirstCNF &cnf() { return _cnf;}
     const FirstCNF &cnf() const { return _cnf;}
 
+    void build();
 
-    void buildFirstCNF();
-    void produceRootRules(HumanDAWG &dawg);
-    void produceRootRules(nonterminal fidSrc, QSharedPointer<NodeDAWG> node);
-    void produceRules(nonterminal fidSrc, HumanDAWG &dawg);
-    void produceRules(nonterminal mainNT, nonterminal fidSrc, QSharedPointer<NodeDAWG> node);
-
-
-    void testHDAWG(const HumanDAWG &dawg, const Rules& rules);
-
-private:
-//    void replaceOrDuplicateRules();
-
-    QMap<nonterminal, QSet<nonterminal> > _toRepOrDup;
-
+    void produceRules(nonterminal srcNT, const Rules &rules);
+    void produceRootRules(const Rules &rules);
 };
 
-#endif // FIRSTTOCNFDAWG_H
+#endif // SIMPLYCNFBUILDER_H

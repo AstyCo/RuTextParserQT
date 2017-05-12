@@ -51,6 +51,8 @@ void FirstToCNFDAWG::buildFirstCNF()
     const UniqueVector<nonterminal, featureID> &terminalRules = _cfg->terminalRules();
     const QMap<nonterminal, Rules> &nonterminalRules = _cfg->nonterminalRules();
 
+    _cnf.setTerminalRules(terminalRules);
+
     QMap<nonterminal, Rules>::const_iterator it(nonterminalRules.constBegin());
 
     while (it != nonterminalRules.constEnd()) {
@@ -59,8 +61,17 @@ void FirstToCNFDAWG::buildFirstCNF()
 
         QList<char *> keys;
         for (int i=0; i < it.value().size(); ++i) {
+//            if (it.key() == _cfg->rootNT()) {
+//                if (i != 145 && i != 109 && i != 127)
+//                        continue;
+//                else {
+//                    qDebug() << it.value()[i];
+//                }
+//            }
             char *key = directedListToKey(it.value()[i]);
             keys.append(key);
+//            if (i > 145)
+//                break;
         }
 
         std::sort(keys.begin(), keys.end(), compareStr);
@@ -83,55 +94,135 @@ void FirstToCNFDAWG::buildFirstCNF()
         // so now it may be moved into CNF
         testHDAWG(hdawg, it.value());
 
-        produceRules(it.key(), hdawg);
-        qDebug().noquote() << _cnf.toReport();
+        if (it.key() == _cfg->rootNT())
+            produceRootRules(hdawg);
+        else {
+            produceRules(it.key(), hdawg);
+        }
+//        qDebug().noquote() << _cnf.toReport();
 
         ++it;
     }
-    replaceOrDuplicateRules();
+    qDebug() << "B1";
+//    qDebug() << "B2";
+    qDebug().noquote() << _cnf.toReport();
+//    qDebug().noquote() << _cnf.toReportRules();
+
+    _cnf.recursiveMinimize();
+//    qDebug().noquote() <<"after minimize\n" << _cnf.toReport();
+//    qDebug().noquote() << _cnf.toReportRules();
 }
 
-void FirstToCNFDAWG::produceRules(nonterminal fidSrc, HumanDAWG &dawg)
+void FirstToCNFDAWG::produceRootRules(HumanDAWG &dawg)
 {
-    // add terminal rules
-    const UniqueVector<nonterminal, featureID> &terminalRules = _cfg->terminalRules();
-    for (nonterminal nt = 0; nt < terminalRules.size(); ++nt)
-        _cnf.add(nt, terminalRules.value(nt));
-    // add binary rules
-    dawg.root().prepare();
-    _toRepOrDup.clear();
+    // prepare
+    dawg.root()->prepare();
 
-    nonterminal curTopNT = fidSrc;
-
-    produceRules(fidSrc, dawg.root());
-
+    // test HDAWG
+    QSharedPointer<NodeDAWG> &root = dawg.root();
+    QMap<LabelType, QSharedPointer<NodeDAWG>>::iterator it(root->childs.begin());
+    while (it != root->childs.end()) {
+        if (it.value()->final) {
+            Q_ASSERT(false);
+        }
+        ++it;
+    }
+    // produce rules
+    produceRootRules(_cfg->rootNT(), root);
 }
 
-void FirstToCNFDAWG::produceRules(nonterminal fidSrc, NodeDAWG &node)
+void FirstToCNFDAWG::produceRootRules(nonterminal fidSrc, QSharedPointer<NodeDAWG> node)
 {
-    if (node.visited)
+    if (node->visited)
         return; // done already
-    node.visited = true;
-    QMap<LabelType, NodeDAWG>::iterator it(node.childs.begin());
-
-    while (it != node.childs.end()) {
+//    qDebug().noquote() << _cnf.toReportRules();
+    node->visited = true;
+    QMap<LabelType, QSharedPointer<NodeDAWG>>::iterator it(node->childs.begin());
+    while (it != node->childs.end()) {
         LabelType label = it.key();
-        if (!it.value().isEmpty()) {
-            nonterminal newNT;
-            if (!it.value().visited) {
-                it.value().nt = _cnf.nextNT();
+        QSharedPointer<NodeDAWG> childNode = it.value();
+        bool needInter = false;
+        // add root's end rules
+        QMap<LabelType, QSharedPointer<NodeDAWG>>::const_iterator it2(childNode->childs.constBegin());
+        while (it2 != childNode->childs.constEnd()) {
+            const QSharedPointer<NodeDAWG> &childchildNode = it2.value();
+            LabelType childLabel = it2.key();
+            if (childchildNode->final) {
+                if (isRight(label.first))
+                    _cnf.add(fidSrc, childLabel.second, label.second);
+                else
+                    _cnf.add(fidSrc, label.second, childLabel.second);
             }
-            newNT = it.value().nt;
+            if (!childchildNode->isEmpty())
+                needInter = true;
+            ++it2;
+        }
 
+        // fill intermediate
+        if (needInter) {
+            // init new nonterminal for node
+            if (childNode->nt == -1)
+                childNode->nt = _cnf.nextNT();
+            nonterminal newNT = childNode->nt;
+
+            // fill intermediate rules
             if (isRight(label.first))
                 _cnf.add(fidSrc, newNT, label.second);
             else
                 _cnf.add(fidSrc, label.second, newNT);
 
-            produceRules(newNT, it.value());
+            // recursion
+            produceRootRules(newNT, it.value());
         }
-        if (it.value().final) {
-            _toRepOrDup[fidSrc].insert(label.second);
+//        else {
+//            if (node->nt == -1)
+//                node->nt = fidSrc;
+//        }
+
+        ++it;
+    }
+}
+
+
+void FirstToCNFDAWG::produceRules(nonterminal fidSrc, HumanDAWG &dawg)
+{
+    // add binary rules
+    dawg.root()->prepare();
+
+    produceRules(fidSrc, fidSrc, dawg.root());
+}
+
+void FirstToCNFDAWG::produceRules(nonterminal mainNT, nonterminal fidSrc, QSharedPointer<NodeDAWG> node)
+{
+    if (node->visited)
+        return; // done already
+    node->visited = true;
+    QMap<LabelType, QSharedPointer<NodeDAWG>>::iterator it(node->childs.begin());
+
+    while (it != node->childs.end()) {
+        LabelType label = it.key();
+        const QSharedPointer<NodeDAWG> &childNode = it.value();
+        // fill end rules
+        if (childNode->final) {
+            if (isRight(label.first))
+                _cnf.add(fidSrc, mainNT, label.second);
+            else
+                _cnf.add(fidSrc, label.second, mainNT);
+        }
+        if (!childNode->isEmpty()) {
+            // init new nonterminal for node
+            if (it.value()->nt == -1)
+                it.value()->nt = _cnf.nextNT();
+            nonterminal newNT = it.value()->nt;
+
+            // fill intermediate rules
+            if (isRight(label.first))
+                _cnf.add(fidSrc, newNT, label.second);
+            else
+                _cnf.add(fidSrc, label.second, newNT);
+
+            // recursion
+            produceRules(mainNT, newNT, it.value());
         }
 
         ++it;
@@ -148,14 +239,14 @@ void FirstToCNFDAWG::testHDAWG(const HumanDAWG &dawg, const FirstToCNFDAWG::Rule
 //    qDebug() << "intermediate count" << dawg.intermediateCount();
 }
 
-void FirstToCNFDAWG::replaceOrDuplicateRules()
-{
-    QMap<nonterminal, QSet<nonterminal> >::const_iterator it(_toRepOrDup.constBegin());
-    while (it != _toRepOrDup.constEnd()) {
-        foreach (nonterminal dest, it.value())
-            _cnf.duplicateOrReplace(it.key(), dest);
+//void FirstToCNFDAWG::replaceOrDuplicateRules()
+//{
+//    QMap<nonterminal, QSet<nonterminal> >::const_iterator it(_toRepOrDup.constBegin());
+//    while (it != _toRepOrDup.constEnd()) {
+//        foreach (nonterminal dest, it.value())
+//            _cnf.duplicateOrReplace(it.key(), dest);
 
-        ++it;
-    }
-    _toRepOrDup.clear();
-}
+//        ++it;
+//    }
+//    _toRepOrDup.clear();
+//}

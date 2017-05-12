@@ -110,82 +110,54 @@ qreal RuleNode::calcProb(ruleID prid, const CNFGrammar &grammar,
     const SimpleRuleTree &seqTree = grammar.conseqRules();
     foreach (const RuleLink &link , _rules) {
         qreal ruleScore = ruleByID[link.id].score;
-//        const SimpleRuleNode *nodeL = seqTree.node(QList<ruleID>() << link.id);
-//        qreal coef = nodeL->totalCount() * 1. / nodeL->totalScore();
-//        qreal seqScore = seqTree.node(QList<ruleID>() << link.id << prid)->score;
+
         featureID fid_src = ruleByID[link.id].rule._sourceFID;
         const SimpleRuleTree &tree = grammar.rulesByFeatureID()[fid_src];
         result += /*qLn(*/ruleScore /** tree.totalCount() *1. / tree.totalScore()*//*)*/;
-//        result += seqScore * coef;
         result += link.node->calcProb(link.id, grammar, fmapper, lmapper);
     }
-//    if (_rules.isEmpty())
-//        return result;
-//    QList<ruleID> ids;
-//    for (int i=0; i < _rules.size(); ++i)
-//        ids << _rules.at(i).id;
-//    featureID fid = grammar.rulesByID()[_rules.first().id].rule._sourceFID;
-//    const SimpleRuleNode *node = grammar.rulesByFeatureID()[fid].node(ids);
-//    if (node && node->score > 0.5) {
-//        result += qLn(node->score);
-//    }
-//    else {
-//        qDebug().noquote() << toString(grammar.rulesByID(), fmapper, lmapper);
-//        Q_ASSERT(node);
-//        Q_ASSERT(node->score > 0.5);
-//    }
-//    foreach (const RuleLink &link, _rules) {
-//        result += link.node->calcProb(grammar, fmapper, lmapper);
-//    }
 
     return result;
 }
 
-qreal RuleNode::calcProb2(ruleID last, const CNFGrammar &grammar, const FeatureMapper &fmapper, const LinkMapper &lmapper, int var) const
+qreal RuleNode::calcProb2(ruleID last, const CNFGrammar &grammar, const FeatureMapper &fmapper, const LinkMapper &lmapper) const
 {
     qreal result = 0;
     if (_rules.isEmpty())
         return result;
+    const QVector<ScoredChomskyRuleRecord> &rulesByID = grammar.rulesByID();
+    const ChomskyRuleRecord &srcRule = rulesByID[_rules.first().id].rule;
 
-//    if (last == -1) {
-//        // calculating root
-//        switch (var) {
-//        case 1:
-//        {
-//            const SimpleRuleNode *node = grammarGetNodeWidth(grammar.rulesByID()[_rules.first().id].rule._sourceFID, grammar);
-//            Q_ASSERT(node!=NULL);
+    if (last == -1) {
+        // root
+        featureID srcFid = srcRule._sourceFID;
+        const QMap<QPair<featureID,ruleID>, int> &conseqRootRules = grammar.conseqRootRules();
+//        result += qLn(grammar.rootScore()[srcFid].score / grammar.rootCount());
 
-//            result += /*qLn(*/node->rootScore.score/*)*/;
-//            foreach (const RuleLink &link, _rules)
-//                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
-//            break;
-//        }
-//        case 2:
-//        {
-//            const QVector<ScoredChomskyRuleRecord> &ruleByID = grammar.rulesByID();
-//            foreach (const RuleLink &link , _rules) {
-//                result += qLn(ruleByID[link.id].score);
-//                result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
-//            }
-//            break;
-//        }
-//        }
-//    }
-//    else {
-        const SimpleRuleTree &conseqRules = grammar.conseqRules();
+        foreach (const RuleLink &link , _rules) {
+            result += qLn(10 + conseqRootRules[qMakePair(srcFid, link.id)] *1. / grammar.rootRulesCount());
+            result += link.node->calcProb2(link.id, grammar, fmapper, lmapper);
+        }
+    }
+    else if (last!=-1) {
+        const ChomskyRuleRecord &rule = rulesByID[last].rule;
+        const QMap<QPair<QPair<linkID, featureID>,ruleID>, int> &conseqRules = grammar.conseqRulesV2();
 
         foreach (const RuleLink &link , _rules) {
             qreal score;
             QList<ruleID> ids;
-            ids << link.id << last;
-            if (!conseqRules.contains(ids))
-                score = 1;
-            else
-                score = 1 + conseqRules.node(ids)->score;
+
+            if (!conseqRules.contains(qMakePair(qMakePair(rule._linkID, rule._dependFID),link.id))) {
+                Q_ASSERT(false);
+            }
+
+            score = 10 + conseqRules[qMakePair(qMakePair(rule._linkID, rule._dependFID),link.id)]
+                    *1. / grammar.conseqRulesCount();
             result += qLn(score);
-            result += link.node->calcProb2(link.id, grammar, fmapper, lmapper, var);
+            result += link.node->calcProb2(link.id, grammar, fmapper, lmapper);
         }
 //    }
+    }
     return result;
 }
 
@@ -201,5 +173,49 @@ void RuleNode::append(const QList<RuleLink> &links)
     foreach (const RuleLink &link, links)
         append(link);
 }
+
+const QList<QPair<featureID, linkID> > RuleNode::toLAS(const CNFGrammar &grammar) const
+{
+    QPair<QList<QPair<featureID, linkID> >,QList<QPair<featureID, linkID> > > tmp = toLASH(grammar);
+    tmp.first.append(tmp.second);
+    return tmp.first;
+}
+
+const QList<featureID> RuleNode::toUAS(const CNFGrammar &grammar) const
+{
+    QList<QPair<featureID, linkID> > las = toLAS(grammar);
+    QList<featureID> result;
+
+    for (int i=0; i < las.size(); ++i)
+        result.append(las[i].first);
+
+    return result;
+}
+
+const QPair<QList<QPair<featureID, linkID> >,QList<QPair<featureID, linkID> > >
+    RuleNode::toLASH(const CNFGrammar &grammar) const
+{
+    QPair<QList<QPair<featureID, linkID> >,QList<QPair<featureID, linkID> > > result;
+
+    for (int i=0; i < _rules.size(); ++i) {
+        const RuleLink &link = _rules[i];
+        const ChomskyRuleRecord &rule = grammar.rulesByID()[link.id].rule;
+        QPair<QList<QPair<featureID, linkID> >,QList<QPair<featureID, linkID> > > tmp
+                = link.node->toLASH(grammar);
+
+        if (rule._isRightRule){
+            result.second.append(tmp.first);
+            result.second.append(qMakePair(rule._sourceFID, rule._linkID));
+            result.second.append(tmp.second);
+        }
+        else {
+            result.first.append(tmp.first);
+            result.first.append(qMakePair(rule._sourceFID, rule._linkID));
+            result.first.append(tmp.second);
+        }
+    }
+    return result;
+}
+
 
 

@@ -50,7 +50,7 @@ public:
                    const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
 
     qreal calcProb2(ruleID last, const CNFGrammar &grammar,
-                    const FeatureMapper &fmapper, const LinkMapper &lmapper, int var) const;
+                    const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
     quint8 &delta() { return _delta;}
     const quint8 &delta() const { return _delta;}
 
@@ -72,6 +72,13 @@ public:
 
         return _rules < other._rules;
     }
+
+    const QList<QPair<featureID, linkID> > toLAS(const CNFGrammar &grammar) const;
+    const QList<featureID> toUAS(const CNFGrammar &grammar) const;
+
+private:
+    const QPair<QList<QPair<featureID, linkID> >,
+        QList<QPair<featureID, linkID> > > toLASH(const CNFGrammar &grammar) const;
 };
 
 typedef QList<RuleNode> ListRuleNode;

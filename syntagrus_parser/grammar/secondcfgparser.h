@@ -113,6 +113,8 @@ public:
                     for (int j=0; j < bodyLinks.size(); ++j) {
                         QList<TDep> newBody;
                         for (int k=0; k < body.size(); ++k) {
+                            qDebug() << "1" << body.size();
+                            qDebug() << "2" << bodyLinks.at(j).size() << endl;
                             linkID depLINK = bodyLinks.at(j).at(k);
                             featureID depFEAT = terminalRules.value(body.at(k).second);
 

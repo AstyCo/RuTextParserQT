@@ -24,6 +24,12 @@ class SYNTAGRUS_PARSERSHARED_EXPORT CNFGrammar
 
     QVector<SimpleRuleTree> _rulesByFeatureID;   ///< [featureID]->(SetOf(SetOf(<ruleID | featureID->X Y>), <number of occuriences>))
     SimpleRuleTree _conseqRules;   ///< Reversed records from corpora depends with length of 2
+    QMap<QPair<QPair<linkID, featureID>,ruleID>, int> _conseqRulesV2;
+    QMap<QPair<featureID,ruleID>, int> _conseqRulesRoot;
+    int _rootCount;
+    int _rootRulesCount;
+    int _conseqRulesCount;
+
 
     // hash
     QVector<QVector<ListRuleID> > _rulesByRightIDsHash;     ///< [leftFeatureID][rightFeatureID]->ListOf(<ruleID | X->leftFeatureID rightFeatureID>)
@@ -40,6 +46,15 @@ public:
         for (int i=0; i<_rulesByFeatureID.size(); ++i)
             _rulesByFeatureID[i].calcAll();
         _conseqRules.calcAll();
+        _rootRulesCount = 0;
+        _conseqRulesCount = 0;
+        foreach (int cnt, _conseqRulesRoot)
+            _rootRulesCount += cnt;
+        foreach (int cnt, _conseqRulesV2)
+            _conseqRulesCount += cnt;
+        _rootCount = 0;
+        foreach (const Scored &sc, _rootScore)
+            _rootCount += (int)(sc.score + 0.5);
     }
 
     QString toReport(const FeatureMapper &fmapper) const;
@@ -77,9 +92,17 @@ public:
     inline const QVector<ScoredChomskyRuleRecord> &rulesByID() const;
     inline const QVector<SimpleRuleTree> &rulesByFeatureID() const;
     inline const SimpleRuleTree &conseqRules() const;
+    const QMap<QPair<QPair<linkID, featureID>,ruleID>, int> &conseqRulesV2() const { return _conseqRulesV2;}
+    const QMap<QPair<featureID,ruleID>, int> &conseqRootRules() const { return _conseqRulesRoot;}
     inline const QVector<QVector<ListRuleID> > &rulesByRightIDsHash() const;
     ListRuleID produceSequenceForCYK(const ListRuleID &ids) const;
     ListRuleID fromCYK(const ListRuleID &ids) const;
+    int rootRulesCount() const;
+
+    int conseqRulesCount() const;
+
+    int rootCount() const;
+
 private:
     void resizeVectors(int sz);
     void resizeMatrix(int sz);
@@ -90,6 +113,7 @@ private:
     ListRuleID::const_iterator find(const ChomskyRuleRecord &rule) const;
     void insertWidthRule(const featureID &srcRuleID, const ListRuleID &ids, bool rootRule);
     void insertInDepthRule(const ruleID &rid, const ruleID &prid);
+    void insertRootRule(const featureID &fid, const ruleID &rid);
 //    QSet::iterator find(const featureID &srcRuleID, const SetRuleID &ids);
 
     /*!
@@ -111,6 +135,7 @@ inline const QVector<ScoredChomskyRuleRecord> &CNFGrammar::rulesByID() const { r
 inline const QVector<SimpleRuleTree> &CNFGrammar::rulesByFeatureID() const { return _rulesByFeatureID;}
 
 inline const SimpleRuleTree &CNFGrammar::conseqRules() const { return _conseqRules;}
+
 
 inline const QVector<Scored> &CNFGrammar::rootScore() const { return _rootScore;}
 

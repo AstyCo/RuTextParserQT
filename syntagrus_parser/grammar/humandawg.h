@@ -14,11 +14,12 @@
 
 #include <QMap>
 #include <QList>
+#include <QSharedPointer>
 
 typedef QPair<RuleDirection, nonterminal> LabelType;
 struct NodeDAWG
 {
-    QMap<LabelType, NodeDAWG> childs;
+    QMap<LabelType, QSharedPointer<NodeDAWG> > childs;
     bool final;
     NodeDAWG() : final(false) {}
 
@@ -27,10 +28,14 @@ struct NodeDAWG
 
     bool isEmpty() const { return childs.isEmpty();}
 
+
+    // algorithm things
+    void prepare();
+    void prepareThis();
+
     bool visited;
     nonterminal nt;
-    void prepare();
-    void prepareThis() { visited = false; nt = -1;}
+    QMap<nonterminal, nonterminal> len2fix;
 };
 using namespace dawgdic;
 
@@ -38,14 +43,16 @@ class HumanDAWG
 {
     typedef QMap<BaseType, QSet<QByteArray> > IndexPaths;
 
-    NodeDAWG _root;
+    QSharedPointer<NodeDAWG> _root;
+
+    QMap<BaseType, QSharedPointer<NodeDAWG> > _hashIndexToNode;
 
 public:
     HumanDAWG(Completer *completer);
 
     bool contains(const QList<LabelType> &body) const;
-    const NodeDAWG &root() const { return _root;}
-    NodeDAWG &root() { return _root;}
+    const QSharedPointer<NodeDAWG> &root() const { return _root;}
+    QSharedPointer<NodeDAWG> &root() { return _root;}
 
     int finalCount() const;
     int intermediateCount() const;
@@ -55,7 +62,7 @@ private:
     IndexPaths makeStep4(BaseType index);
     IndexPaths makeStep41(BaseType index);
     IndexPaths makeStep4n(const IndexPaths &lastPaths, int n);
-    void makeStep4H(BaseType index, NodeDAWG &node);
+    void makeStep4H(BaseType index, QSharedPointer<NodeDAWG> node);
 
     LabelType ltFromByteArray(const QByteArray &s);
 

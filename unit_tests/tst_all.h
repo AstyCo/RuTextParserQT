@@ -55,6 +55,22 @@ private:
                     const QVector<ScoredChomskyRuleRecord> &ruleByID,
                     const FeatureMapper &fmapper, const LinkMapper &lmapper);
 
+    QList<QPair<featureID, linkID> > toLAS(const RecordNode *node,
+                                           const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
+    QPair<QList<QPair<featureID, linkID> >,
+        QList<QPair<featureID, linkID> > > toLASH(const RecordNode *node,
+                                                  const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
+
+    QList<featureID> toUAS(const RecordNode *node,
+                           const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
+
+    int calcLASForSent(const RuleNode *rulenode, const RecordNode *recordnode,
+                       const CNFGrammar &grammar,
+                       const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
+    int calcUASForSent(const RuleNode *rulenode, const RecordNode *recordnode,
+                       const CNFGrammar &grammar,
+                       const FeatureMapper &fmapper, const LinkMapper &lmapper) const;
+
 public:
     void deserializeTreeCorpora();
     void deserializeGrammar();
@@ -83,6 +99,9 @@ public Q_SLOTS:
 
     void testSecondGrammar();
     void testSecondGrammar2();
+
+    void testLogic();
+    void testSimpleFirst();
 };
 
 #endif // TST_ALL_H

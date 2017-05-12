@@ -47,7 +47,8 @@ SOURCES += \
     grammar/secondcfg.cpp \
     grammar/firsttocnfdawg.cpp \
     grammar/humandawg.cpp \
-    grammar/firstcnf.cpp
+    grammar/firstcnf.cpp \
+    grammar/simplycnfbuilder.cpp
 
 HEADERS +=\
         syntagrus_parser_global.h \
@@ -76,7 +77,8 @@ HEADERS +=\
     grammar/ruledirection.h \
     grammar/firsttocnfdawg.h \
     grammar/humandawg.h \
-    grammar/firstcnf.h
+    grammar/firstcnf.h \
+    grammar/simplycnfbuilder.h
 
 unix {
     target.path = /usr/lib

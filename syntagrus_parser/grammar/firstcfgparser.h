@@ -44,9 +44,11 @@ public:
         }
 
         featureID srcFid = fmapper.index(node->record()._feat);
+        bool root = (node->record()._dom == -1);
 
         if (!node->childNodes().isEmpty()) {
             QList<TDep> body;
+
 
             for (int i=0; i < node->childNodes().size(); ++i) {
                 featureID depFEAT = fmapper.index(node->childNodes().at(i)->record()._feat);
@@ -60,12 +62,29 @@ public:
                 // parse recursively
                 parseNode(node->childNodes().at(i), fmapper, lmapper);
             }
-            if (node->record()._dom == -1)  // if root
-                _cfg.addRoot(body);
+
+            if (root)  // if root
+                _cfg.addRoot(srcFid, body);
 
             _cfg.add(srcFid, body);
         }
     }
+
+private:
+//    QList<TDep> produceSpecialForm(const QList<TDep> &body) const
+//    {
+//        QList<TDep> result;
+//        for (int i=0; i < body.size(); ++i) {
+//            if (isLeft(body.at(i).first))
+//                result.append(body.at(i));
+//            else {
+//                result.push_back(body.at(i));
+//            }
+//        }
+//        return result;
+//    }
 };
 
 #endif // FIRSTCFGPARSER_H
+
+
